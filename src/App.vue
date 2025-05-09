@@ -1,17 +1,33 @@
+// src/App.vue
 <script setup>
-import { ref, onMounted, provide } from 'vue';
-import { RouterLink, RouterView } from 'vue-router'; // Import RouterLink and RouterView
+import { ref, onMounted, provide, readonly } from 'vue'; // Import provide and readonly
+import { RouterLink, RouterView } from 'vue-router';
+import { io } from "socket.io-client"; // Import socket.io-client
 
+// --- PBR Config State (giữ nguyên) ---
 const pbrConfig = ref(null);
-const isLoadingConfig = ref(true);
-const configError = ref('');
+const isLoadingPbrConfig = ref(true);
+const pbrConfigError = ref('');
 
-// Ensure your backend API base URL is correct
+// --- WebSocket and Global Simulation State ---
+const socket = ref(null);
+const globalSimStatus = ref({
+  isRunning: false,
+  taskId: null,
+  requestedByInfo: null,
+  completedMatches: 0,
+  totalMatches: 0,
+  startTime: null,
+  statusMessage: "Connecting to server..." // Initial message
+});
+const showGlobalSimBannerInControls = ref(false); // To control visibility in LeaderboardView
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000'; // WebSocket server URL
 
 async function fetchPbrConfig() {
-  isLoadingConfig.value = true;
-  configError.value = '';
+  isLoadingPbrConfig.value = true;
+  pbrConfigError.value = '';
   try {
     const response = await fetch(`${API_BASE_URL}/config/pbr-settings`);
     if (!response.ok) {
@@ -26,20 +42,70 @@ async function fetchPbrConfig() {
     }
   } catch (error) {
     console.error("Failed to fetch PBR config:", error);
-    configError.value = `Failed to load PBR configuration: ${error.message}`;
+    pbrConfigError.value = `Failed to load PBR configuration: ${error.message}`;
     pbrConfig.value = null;
   } finally {
-    isLoadingConfig.value = false;
+    isLoadingPbrConfig.value = false;
   }
 }
 
 onMounted(() => {
   fetchPbrConfig();
+
+  socket.value = io(WS_URL, {
+    // transports: ['websocket'], // Optional: force WebSocket transport
+  });
+
+  socket.value.on('connect', () => {
+    console.log('Socket connected to server:', socket.value.id);
+    if (!globalSimStatus.value.isRunning) { // If not already tracking a running sim
+        globalSimStatus.value.statusMessage = "Idle. Ready to simulate.";
+    }
+  });
+
+  socket.value.on('disconnect', () => {
+    console.log('Socket disconnected from server.');
+    globalSimStatus.value.statusMessage = "Disconnected from server. Attempting to reconnect...";
+    // Socket.IO client attempts to reconnect automatically by default
+  });
+
+  socket.value.on('connect_error', (err) => {
+    console.error('Socket connection error:', err.message);
+    globalSimStatus.value.statusMessage = `Connection Error: ${err.message}. Retrying...`;
+  });
+
+  socket.value.on('global_simulation_status_update', (status) => {
+    console.log('Global sim status update:', status);
+    globalSimStatus.value = { ...status }; // Update the whole status object
+    showGlobalSimBannerInControls.value = status.isRunning || (status.taskId && !status.isRunning); // Show if running or just completed
+  });
+
+  // Client-specific events (for the one who initiated the job)
+  socket.value.on('simulation_job_error', (errorData) => {
+    console.error('Simulation Job Error:', errorData);
+    // This error is specific to the client that started the job.
+    // It's already reflected in globalSimStatus if the job stops.
+    // Could show an additional, more prominent error to this specific client.
+    // For now, globalSimStatus will show the error.
+  });
+
+  socket.value.on('simulation_job_completed', (data) => {
+    console.log('My Simulation Job Completed:', data);
+    // This is for the client that started the job.
+    // globalSimStatus already updated. Could show a specific success toast/notification here.
+  });
+
 });
 
-provide('pbrConfig', pbrConfig);
-provide('isLoadingPbrConfig', isLoadingConfig);
-provide('pbrConfigError', configError);
+// Provide socket and globalSimStatus to child components
+provide('socket', socket); // Provide socket instance (readonly to prevent modification by children)
+provide('globalSimStatus', readonly(globalSimStatus)); // Provide global status (readonly)
+provide('showGlobalSimBannerInControls', showGlobalSimBannerInControls); // Provide flag to show banner
+
+// PBR Config provide (giữ nguyên)
+provide('pbrConfig', readonly(pbrConfig));
+provide('isLoadingPbrConfig', readonly(isLoadingPbrConfig));
+provide('pbrConfigError', readonly(pbrConfigError));
 
 </script>
 
@@ -47,52 +113,18 @@ provide('pbrConfigError', configError);
   <div id="elo-dashboard-app">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
       <div class="container-fluid">
-        <!-- Brand/Logo as Text -->
         <RouterLink class="navbar-brand fw-bold" to="/">EloSim Pro</RouterLink>
-
-        <!-- Navbar Toggler for mobile -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-
-        <!-- Navbar Links -->
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <RouterLink class="nav-link" active-class="active" to="/">Leaderboard</RouterLink>
+              <RouterLink class="nav-link" active-class="active" to="/">Leaderboard & Sim</RouterLink>
             </li>
             <li class="nav-item">
               <RouterLink class="nav-link" active-class="active" to="/statistics">Statistics</RouterLink>
             </li>
-            <!-- Add more navigation links here as needed -->
-            <!-- Example:
-            <li class="nav-item">
-              <RouterLink class="nav-link" active-class="active" to="/champions">Champions</RouterLink>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                More
-              </a>
-              <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownMenuLink">
-                <li><RouterLink class="dropdown-item" to="/settings">Settings</RouterLink></li>
-                <li><RouterLink class="dropdown-item" to="/about">About</RouterLink></li>
-              </ul>
-            </li>
-            -->
-          </ul>
-
-          <!-- Right-aligned items (optional, e.g., user profile, logout) -->
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <span class="navbar-text me-3">
-                Welcome, Guest! <!-- Placeholder for user name -->
-              </span>
-            </li>
-            <!-- Example Logout Button (if you implement auth)
-            <li class="nav-item">
-              <button class="btn btn-outline-light btn-sm" @click="logout">Logout</button>
-            </li>
-            -->
           </ul>
         </div>
       </div>
@@ -106,8 +138,7 @@ provide('pbrConfigError', configError);
         <p class="lead mt-2">Loading System Configuration...</p>
       </div>
       <div v-else-if="configError" class="alert alert-danger mt-5 pt-5" role="alert">
-        <h4>Configuration Error</h4>
-        <p>{{ configError }}</p>
+        <h4>Configuration Error</h4> <p>{{ configError }}</p>
         <button @click="fetchPbrConfig" class="btn btn-warning">Retry Loading Config</button>
       </div>
       <RouterView v-else />
@@ -115,40 +146,17 @@ provide('pbrConfigError', configError);
 
     <footer class="footer mt-auto py-3 bg-secondary-subtle text-center border-top">
       <div class="container">
-        <span class="text-muted">© {{ new Date().getFullYear() }} Elo Simulation Project. All Rights Reserved.</span>
+        <span class="text-muted">© {{ new Date().getFullYear() }} Elo Simulation Project.</span>
       </div>
     </footer>
   </div>
 </template>
 
 <style>
-/* Global styles (can also be in src/assets/main.css) */
-html, body {
-  height: 100%;
-}
-
-#elo-dashboard-app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh; /* Ensure footer sticks to bottom */
-}
-
-.main-content {
-  flex-grow: 1;
-  padding-top: 70px; /* Adjust based on actual navbar height + some margin */
-  padding-bottom: 2rem; /* Space above footer */
-}
-
-.navbar-brand {
-  letter-spacing: 0.5px;
-}
-
-.nav-link.active {
-  font-weight: bold;
-  /* color: #0d6efd !important; /* Bootstrap primary blue, or your theme color */
-}
-
-.footer {
-    font-size: 0.9em;
-}
+html, body { height: 100%; }
+#elo-dashboard-app { display: flex; flex-direction: column; min-height: 100vh; }
+.main-content { flex-grow: 1; padding-top: 70px; padding-bottom: 2rem; }
+.navbar-brand { letter-spacing: 0.5px; }
+.nav-link.active { font-weight: bold; }
+.footer { font-size: 0.9em; }
 </style>
