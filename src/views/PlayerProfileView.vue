@@ -1,8 +1,9 @@
-// src/views/PlayerProfileView.vue
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import EloHistoryChart from '../components/charts/EloHistoryChart.vue'; // Import the chart component
+import EloHistoryChart from '../components/charts/EloHistoryChart.vue';
+import { Doughnut, Radar } from 'vue-chartjs'; // Added Radar
+import { STANDARD_ROLES } from '../../config/constants.js'; // Assuming you have this for role radar chart
 
 const route = useRoute();
 const router = useRouter();
@@ -11,207 +12,351 @@ const player = ref(null);
 const isLoading = ref(false);
 const errorMessage = ref('');
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 async function fetchPlayerProfile(id) {
-  // ... (fetchPlayerProfile function remains the same)
-  isLoading.value = true;
-  errorMessage.value = '';
-  player.value = null; 
-  try {
-    const response = await fetch(`${API_BASE_URL}/players/${id}`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    isLoading.value = true;
+    errorMessage.value = '';
+    player.value = null;
+    try {
+        const response = await fetch(`${API_BASE_URL}/players/${id}`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        player.value = data.data || data;
+    } catch (error) {
+        console.error(`Failed to fetch player ${id}:`, error);
+        errorMessage.value = `Failed to load player profile: ${error.message}`;
+    } finally {
+        isLoading.value = false;
     }
-    const data = await response.json();
-    player.value = data.data || data;
-  } catch (error) {
-    console.error(`Failed to fetch player ${id}:`, error);
-    errorMessage.value = `Failed to load player profile: ${error.message}`;
-  } finally {
-    isLoading.value = false;
-  }
 }
 
 const kdaRatio = (kda) => {
-  // ... (kdaRatio function remains the same)
-  if (!kda || typeof kda.deaths !== 'number') return 'N/A';
-  return ((kda.kills || 0) + (kda.assists || 0)) / Math.max(1, kda.deaths);
+    if (!kda || typeof kda.deaths !== 'number') return 'N/A';
+    return ((kda.kills || 0) + (kda.assists || 0)) / Math.max(1, kda.deaths);
 };
 
 const sortedMatchHistory = computed(() => {
-  // ... (sortedMatchHistory computed property remains the same)
-  if (!player.value || !player.value.matchHistory) return [];
-  return player.value.matchHistory; // Assuming already sorted by newest (which is what we want for chart labels)
+    if (!player.value || !player.value.matchHistory) return [];
+    return player.value.matchHistory;
 });
 
-// Computed property for chart data
 const eloChartData = computed(() => {
-  if (!player.value || !player.value.matchHistory || player.value.matchHistory.length === 0) {
+    if (!player.value || !player.value.matchHistory || player.value.matchHistory.length < 2) { // Need at least 2 points for a line
+        return { labels: [], datasets: [{ data: [] }] };
+    }
+    const reversedHistory = [...player.value.matchHistory];
+    let eloPoints = [];
+    let eloTracker = player.value.elo;
+    eloPoints.push(eloTracker);
+    for (let i = 0; i < reversedHistory.length - 1; i++) {
+        const match = reversedHistory[i];
+        eloTracker -= match.eloChange;
+        eloPoints.push(eloTracker);
+    }
+    eloPoints.reverse();
+    const chartLabels = player.value.matchHistory.map((_, index) => `M${player.value.gamesPlayed - player.value.matchHistory.length + index + 1}`).reverse();
     return {
-      labels: [],
-      datasets: [{ data: [] }] // Chart.js needs datasets to be an array
+        labels: chartLabels,
+        datasets: [{
+            label: 'Elo Rating', backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgb(54, 162, 235)',
+            data: eloPoints, fill: true, tension: 0.1, pointRadius: 2, pointHoverRadius: 4
+        }]
     };
-  }
-
-  // We need to calculate Elo at each point in history.
-  // matchHistory stores eloChange. We know currentElo.
-  // So, we work backwards from currentElo.
-  // History is newest first.
-  const history = [...player.value.matchHistory].reverse(); // Oldest first for calculating forward
-  const labels = [];
-  const eloData = [];
-  let currentEloForChart = player.value.elo; // Start with the very latest elo
-
-  // To plot elo *after* each match, we work backwards from current elo
-  // The matchHistory is newest first, so the last element in history (after reversing) is the oldest recorded match.
-  // Elo *before* the oldest recorded match is unknown without more data or assumptions.
-  // Let's plot Elo *after* each match in the recorded history.
-
-  // If matchHistory stores elo *after* that match, it's simpler.
-  // Our current player.matchHistory doesn't store elo *at that point*. It stores eloChange.
-  // So we must reconstruct it.
-
-  const reversedHistory = [...player.value.matchHistory]; // Newest first
-  let eloPoints = [];
-  let eloTracker = player.value.elo; // Start with current ELO
-
-  // Add current ELO as the last point (most recent)
-  eloPoints.push(eloTracker);
-  
-  // Iterate from newest match to oldest, subtracting eloChange to get previous ELO
-  for (let i = 0; i < reversedHistory.length -1; i++) { // -1 because the last point is already player.elo
-      const match = reversedHistory[i];
-      eloTracker -= match.eloChange; // Elo before this match was current eloTracker - eloChange
-      eloPoints.push(eloTracker);
-      // We want to plot elo *after* match[i-1] (which is eloTracker for match[i])
-  }
-  eloPoints.reverse(); // Now oldest to newest ELO values *after* each match in history
-
-  const chartLabels = player.value.matchHistory.map((_, index) => `M${player.value.gamesPlayed - player.value.matchHistory.length + index + 1}`).reverse();
-  // If history is less than gamesPlayed, adjust starting match number.
-  // If only 10 matches in history and 50 games played, labels are M41, M42... M50
-
-  return {
-    labels: chartLabels, // Labels from oldest match to newest
-    datasets: [
-      {
-        label: 'Elo Rating',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgb(75, 192, 192)',
-        data: eloPoints, // Elo after each match, oldest to newest
-        fill: true,
-        tension: 0.1,
-        pointRadius: 3,
-        pointHoverRadius: 5
-      }
-    ]
-  };
 });
 
+const winLossChartData = computed(() => {
+    if (!player.value || !player.value.matchHistory || player.value.matchHistory.length === 0) return null;
+    let wins = 0; let losses = 0;
+    player.value.matchHistory.forEach(match => {
+        if (match.result === 'win') wins++; else if (match.result === 'loss') losses++;
+    });
+    if (wins === 0 && losses === 0) return null;
+    return {
+        labels: [`Wins (${wins})`, `Losses (${losses})`],
+        datasets: [{ backgroundColor: ['#28a745', '#dc3545'], data: [wins, losses] }]
+    };
+});
+
+const winLossChartOptions = ref({
+    responsive: true, maintainAspectRatio: false, cutout: '70%',
+    plugins: { legend: { display: true, position: 'bottom', labels: { padding: 15 } }, title: { display: false } }
+});
+
+
+const rolePerformanceChartData = computed(() => {
+    if (!player.value || !player.value.matchHistory || player.value.matchHistory.length === 0) return null;
+    const roleStats = {};
+    STANDARD_ROLES.forEach(role => { roleStats[role] = { wins: 0, games: 0 }; });
+    player.value.matchHistory.forEach(match => {
+        if (match.role && roleStats[match.role]) {
+            roleStats[match.role].games++;
+            if (match.result === 'win') roleStats[match.role].wins++;
+        }
+    });
+    const labels = STANDARD_ROLES.filter(role => roleStats[role].games > 2); // Min 3 games for radar
+    if (labels.length < 3) return null;
+    const winRates = labels.map(role => (roleStats[role].games > 0 ? (roleStats[role].wins / roleStats[role].games) * 100 : 0));
+    return {
+        labels: labels,
+        datasets: [{
+            label: 'Win Rate (%) by Role', data: winRates,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'rgb(255, 99, 132)',
+            pointBackgroundColor: 'rgb(255, 99, 132)', pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff', pointHoverBorderColor: 'rgb(255, 99, 132)'
+        }]
+    };
+});
+const rolePerformanceChartOptions = ref({
+    responsive: true, maintainAspectRatio: false,
+    scales: { r: { angleLines: { display: true }, suggestedMin: 0, suggestedMax: 100, ticks: { backdropColor: 'transparent', stepSize: 25 }, pointLabels: { font: { size: 13 } } } },
+    plugins: { title: { display: false }, legend: { display: false } }
+});
+
+
+
+function getDDragonKeyFromName(championName) {
+  if (!championName) return 'Yasuo'; // Default or error key
+
+  // Xử lý các trường hợp đặc biệt trước
+  const specialCases = {
+    "Nunu & Willump": "Nunu",
+    "Renata Glasc": "Renata",
+    "Wukong": "MonkeyKing", // Nếu championName của bạn là Wukong thay vì Monkey King
+    "Kha'Zix": "Khazix", // Giả sử key là Khazix
+    "Cho'Gath": "Chogath",
+    "Vel'Koz": "Velkoz",
+    "Kai'Sa": "Kaisa",
+    // Thêm các trường hợp khác nếu có
+  };
+  if (specialCases[championName]) {
+    return specialCases[championName];
+  }
+
+  // Quy tắc chung: loại bỏ khoảng trắng và dấu nháy đơn
+  return championName.replace(/\s+/g, '').replace(/'/g, '');
+}
 
 function goToMatchDetail(matchId) {
-  // ... (goToMatchDetail function remains the same)
-   if (matchId) {
-    router.push({ name: 'MatchDetail', params: { matchId: matchId } });
+  if (matchId && player.value) { // Ensure player.value is available for playerId
+    router.push({ 
+      name: 'MatchDetail', 
+      params: { matchId: matchId },
+      query: { highlightedPlayerId: player.value.playerId } // <<<< ADD THIS
+    });
   }
 }
 
-onMounted(() => {
-  if (route.params.playerId) {
-    fetchPlayerProfile(route.params.playerId);
-  }
-});
 
-watch(() => route.params.playerId, (newId) => {
-  if (newId) {
-    fetchPlayerProfile(newId);
-  }
-});
+onMounted(() => { if (route.params.playerId) fetchPlayerProfile(route.params.playerId); });
+watch(() => route.params.playerId, (newId) => { if (newId) fetchPlayerProfile(newId); });
 </script>
 
 <template>
-  <div class="player-profile-view">
-    <div v-if="isLoading" class="text-center py-5">
-      <!-- ... spinner ... -->
-    </div>
-    <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
-      {{ errorMessage }}
-    </div>
-    <div v-else-if="player" class="card">
-      <div class="card-header">
-        <h2>{{ player.playerName }} <small class="text-muted">({{ player.playerId }})</small></h2>
-      </div>
-      <div class="card-body">
-        <div class="row mb-3">
-            <!-- ... player stats ... -->
-             <div class="col-md-3"><strong>Elo:</strong> {{ player.elo.toFixed(0) }}</div>
-            <div class="col-md-3"><strong>Games Played:</strong> {{ player.gamesPlayed }}</div>
-            <div class="col-md-3"><strong>Win Streak:</strong> {{ player.currentWinStreak || 0 }}</div>
-            <div class="col-md-3"><strong>Loss Streak:</strong> {{ player.currentLossStreak || 0 }}</div>
+    <div class="player-profile-view py-4">
+        <div v-if="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading profile...</span>
+            </div>
+            <p class="mt-2 lead">Loading player profile...</p>
         </div>
-        
-        <!-- Elo History Chart -->
-        <div v-if="player.matchHistory && player.matchHistory.length > 0" class="mb-4">
-          <h4>Elo Progression (Last {{ player.matchHistory.length }} Games)</h4>
-          <EloHistoryChart :chartData="eloChartData" />
+        <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
+            <h4>Error Loading Profile</h4>
+            <p>{{ errorMessage }}</p>
+            <button @click="fetchPlayerProfile(route.params.playerId)" class="btn btn-warning btn-sm">Try Again</button>
         </div>
-        <div v-else-if="player.gamesPlayed > 0" class="alert alert-info">
-            Not enough match history to display Elo progression chart.
-        </div>
+        <div v-else-if="player">
+            <!-- Player Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <div>
+                    <h1 class="display-5">{{ player.playerName }}</h1>
+                    <p class="text-muted mb-0">Player ID: {{ player.playerId }}</p>
+                </div>
+                <button @click="router.back()" class="btn btn-outline-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-circle me-1" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z" />
+                    </svg>
+                    Back
+                </button>
+            </div>
+
+            <!-- Player Summary Row -->
+            <div class="row mb-4 gy-3">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Player Statistics</h5>
+                            <div class="row">
+                                <div class="col-sm-6 col-md-3 mb-2 mb-md-0">
+                                    <div class="stat-item text-center p-2 border rounded">
+                                        <h6 class="text-muted small">ELO RATING</h6>
+                                        <p class="fs-4 fw-bold mb-0">{{ player.elo.toFixed(0) }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3 mb-2 mb-md-0">
+                                    <div class="stat-item text-center p-2 border rounded">
+                                        <h6 class="text-muted small">GAMES PLAYED</h6>
+                                        <p class="fs-4 fw-bold mb-0">{{ player.gamesPlayed }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3 mb-2 mb-md-0">
+                                    <div class="stat-item text-center p-2 border rounded">
+                                        <h6 class="text-muted small">WIN STREAK</h6>
+                                        <p class="fs-4 fw-bold mb-0 text-success">{{ player.currentWinStreak || 0 }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="stat-item text-center p-2 border rounded">
+                                        <h6 class="text-muted small">LOSS STREAK</h6>
+                                        <p class="fs-4 fw-bold mb-0 text-danger">{{ player.currentLossStreak || 0 }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                            <h5 class="card-title text-primary mb-3">Win/Loss (Last {{ sortedMatchHistory.length }})</h5>
+                            <div v-if="winLossChartData" style="position: relative; height:180px; width:180px;">
+                                <Doughnut :data="winLossChartData" :options="winLossChartOptions" />
+                            </div>
+                            <div v-else class="text-muted small mt-3">Not enough data for Win/Loss chart.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Elo Progression & Role Performance Row -->
+            <div class="row mb-4 gy-3">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Elo Progression (Last {{ sortedMatchHistory.length }} Games)</h5>
+                            <div v-if="eloChartData.datasets[0].data.length > 1">
+                                <EloHistoryChart :chartData="eloChartData" />
+                            </div>
+                            <div v-else-if="player.gamesPlayed > 0" class="alert alert-light text-center small p-3">
+                                Play at least 2 games with recorded history to see Elo progression.
+                            </div>
+                            <div v-else class="alert alert-light text-center small p-3">
+                                No match history for Elo progression chart.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                            <h5 class="card-title text-primary mb-3">Role Win Rate (%)</h5>
+                            <div v-if="rolePerformanceChartData" style="position: relative; height:250px; width:100%;">
+                                <Radar :data="rolePerformanceChartData" :options="rolePerformanceChartOptions" />
+                            </div>
+                            <div v-else class="text-muted small mt-3">Not enough data (min 3 games per role, 3 roles played) for Role Performance chart.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
-        <hr v-if="player.matchHistory && player.matchHistory.length > 0"/>
-        <h4>Match History</h4>
-        <!-- ... Match History Table (giữ nguyên) ... -->
-         <div v-if="sortedMatchHistory.length === 0" class="alert alert-info mt-3">No match history available for this player.</div>
-        <div v-else class="table-responsive mt-3" style="max-height: 70vh;">
-            <table class="table table-sm table-hover align-middle">
-                <thead class="table-light sticky-top">
-                    <tr>
-                        <th>Match ID</th><th>Champion</th><th>Role</th><th>Result</th><th>Elo +/-</th><th>KDA</th><th>CS</th><th>Gold</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="match in sortedMatchHistory" :key="match.matchId || match.timestamp" @click="goToMatchDetail(match.matchId)" :class="{'table-row-clickable': match.matchId}">
-                        <td><small>{{ match.matchId || 'N/A' }}</small></td>
-                        <td>{{ match.championPlayed?.championName || 'N/A' }}</td>
-                        <td>{{ match.role || 'N/A' }}</td>
-                        <td :class="{'text-success fw-bold': match.result === 'win', 'text-danger fw-bold': match.result === 'loss'}">
-                        {{ match.result === 'win' ? 'Victory' : 'Defeat' }}
-                        </td>
-                        <td :class="{'text-success': match.eloChange > 0, 'text-danger': match.eloChange < 0}">
-                        {{ match.eloChange >= 0 ? '+' : '' }}{{ match.eloChange?.toFixed(0) || '0' }}
-                        <small v-if="match.streakAdjustment && match.streakAdjustment !== 0" :class="{'text-success': match.streakAdjustment > 0, 'text-danger': match.streakAdjustment < 0}">
-                            ({{ match.streakAdjustment > 0 ? '+' : '' }}{{ match.streakAdjustment }} streak)
-                        </small>
-                        </td>
-                        <td>
-                        {{ match.kda?.kills || 0 }}/{{ match.kda?.deaths || 0 }}/{{ match.kda?.assists || 0 }}
-                        <small>({{ kdaRatio(match.kda).toFixed(2) }})</small>
-                        </td>
-                        <td>{{ match.cs || 0 }}</td>
-                        <td>{{ (match.gold || 0).toLocaleString() }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Match History Table -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4 class="mb-0 text-primary">Match History</h4>
+                </div>
+                <div class="card-body">
+                    <div v-if="sortedMatchHistory.length === 0" class="alert alert-info mt-0">No match history available for this player.</div>
+                    <div v-else class="table-responsive" style="max-height: 80vh;">
+                        <table class="table table-sm table-hover align-middle player-match-history-table">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>Match ID</th>
+                                    <th>Champion</th>
+                                    <th>Role</th>
+                                    <th>Result</th>
+                                    <th>Elo +/-</th>
+                                    <th>KDA</th>
+                                    <th>CS</th>
+                                    <th>Gold</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="match in sortedMatchHistory" :key="match.matchId || match.timestamp" @click="goToMatchDetail(match.matchId)" :class="{ 'table-row-clickable': match.matchId }">
+                                    <td><small>{{ match.matchId || 'N/A' }}</small></td>
+                                    <td>
+                                        <img v-if="match.championPlayed && match.championPlayed.championId" :src="`https://ddragon.leagueoflegends.com/cdn/14.4.1/img/champion/${getDDragonKeyFromName(match.championPlayed.championName)}.png`" :alt="match.championPlayed.championName" width="24" height="24" class="me-1 rounded-circle champion-icon-fallback" @error="($event.target.style.display = 'none')">
+                                        {{ match.championPlayed?.championName || 'N/A' }}
+                                    </td>
+                                    <td>{{ match.role || 'N/A' }}</td>
+                                    <td :class="{ 'text-success fw-bold': match.result === 'win', 'text-danger fw-bold': match.result === 'loss' }">
+                                        {{ match.result === 'win' ? 'Victory' : 'Defeat' }}
+                                    </td>
+                                    <td :class="{ 'text-success': match.eloChange > 0, 'text-danger': match.eloChange < 0 }">
+                                        {{ match.eloChange >= 0 ? '+' : '' }}{{ match.eloChange?.toFixed(0) || '0' }}
+                                        <small v-if="match.streakAdjustment && match.streakAdjustment !== 0" :class="{ 'text-success-emphasis': match.streakAdjustment > 0, 'text-danger-emphasis': match.streakAdjustment < 0 }" class="d-block fst-italic">
+                                            ({{ match.streakAdjustment > 0 ? '+' : '' }}{{ match.streakAdjustment }} streak)
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {{ match.kda?.kills || 0 }}/<span class="text-danger">{{ match.kda?.deaths || 0 }}</span>/{{ match.kda?.assists || 0 }}
+                                        <small class="d-block text-muted">({{ kdaRatio(match.kda).toFixed(2) }} KDA)</small>
+                                    </td>
+                                    <td>{{ match.cs || 0 }}</td>
+                                    <td>{{ (match.gold || 0).toLocaleString() }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
-      </div>
-       <div class="card-footer">
-        <button @click="router.back()" class="btn btn-secondary">Back to Leaderboard</button>
-      </div>
+        <div v-else-if="!isLoading" class="alert alert-warning text-center">
+            Player data could not be loaded or does not exist.
+        </div>
     </div>
-     <div v-else class="alert alert-warning">
-      Player data not found or an error occurred.
-    </div>
-  </div>
 </template>
 
 <style scoped>
-/* ... (styles giữ nguyên) ... */
-.player-profile-view { max-width: 1200px; margin: auto; }
-.table-responsive { font-size: 0.9rem; }
-.table-row-clickable:hover { cursor: pointer; background-color: #f0f0f0; }
-.sticky-top { top: -1px; }
+.player-profile-view {
+    max-width: 1320px;
+    /* Bootstrap's xxl container width */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stat-item h6 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.player-match-history-table th,
+.player-match-history-table td {
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.table-row-clickable:hover {
+    cursor: pointer;
+    background-color: #e9ecef;
+    /* Lighter hover for better readability */
+}
+
+.sticky-top {
+    /* Ensure sticky header in table works within its scrollable parent */
+    top: -1px;
+    background-color: var(--bs-table-bg);
+    /* Match table header background */
+}
+
+.champion-icon-fallback {
+    /* Basic style for champion icons, can be improved */
+    background-color: #333;
+    /* Fallback color if image fails */
+}
 </style>

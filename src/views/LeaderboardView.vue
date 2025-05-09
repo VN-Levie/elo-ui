@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router'; // Import useRouter
 import EloDistributionChart from '../components/charts/EloDistributionChart.vue';
+import { Bar } from 'vue-chartjs';
 const eloDistributionData = ref(null);
 const isLoadingEloDistribution = ref(false);
 
@@ -117,7 +118,33 @@ watch(leaderboardLimit, (newValue, oldValue) => {
         fetchPlayers();
     }
 });
+// const topPlayersChartData = computed(() => {
+//     if (!players.value || players.value.length === 0) return null;
+//     // leaderboardLimit already controls how many players are fetched
+//     const topNPlayers = players.value; // Already sorted by Elo descending
 
+//     return {
+//         labels: topNPlayers.map(p => p.playerName),
+//         datasets: [{
+//             label: 'Elo Rating',
+//             data: topNPlayers.map(p => p.elo),
+//             backgroundColor: 'rgba(75, 192, 192, 0.7)',
+//             borderColor: 'rgba(75, 192, 192, 1)',
+//             borderWidth: 1
+//         }]
+//     };
+// });
+
+// const topPlayersChartOptions = ref({
+//     indexAxis: 'y', // This makes it a horizontal bar chart
+//     responsive: true,
+//     maintainAspectRatio: false,
+//     scales: { x: { beginAtZero: false, title: { display: true, text: 'Elo' } }, y: { ticks: { autoSkip: false } } }, // autoSkip: false to show all names
+//     plugins: {
+//         legend: { display: false },
+//         title: { display: true, text: `Top ${leaderboardLimit.value} Players by Elo` }
+//     }
+// });
 onMounted(async () => {
     isLoading.value = true;
     await fetchPlayers();
@@ -191,7 +218,19 @@ onMounted(async () => {
                     No players to display. Try initializing the system or simulating matches.
                 </div>
 
+
                 <div v-else-if="players.length > 0" class="table-responsive">
+                    <!-- <div class="leaderboard-section card">
+                        <div class="card-header"> ... </div>
+                        <div class="card-body">
+                            <div v-if="topPlayersChartData" class="mb-4">
+                                <div style="height: 400px;"> 
+                                    <Bar :data="topPlayersChartData" :options="topPlayersChartOptions" />
+                                </div>
+                            </div>
+
+                        </div>
+                    </div> -->
                     <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                             <tr>

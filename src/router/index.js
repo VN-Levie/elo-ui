@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LeaderboardView from '../views/LeaderboardView.vue';
 import PlayerProfileView from '../views/PlayerProfileView.vue';
 import MatchDetailView from '../views/MatchDetailView.vue';
-
+import StatisticsView from '../views/StatisticsView.vue';
 const routes = [
     {
         path: '/',
@@ -20,6 +20,11 @@ const routes = [
         name: 'MatchDetail',
         component: MatchDetailView,
         props: true
+    },
+    {
+        path: '/statistics',
+        name: 'Statistics',
+        component: () => StatisticsView // Lazy loading example
     },
     // {
     //   path: '/champions',
