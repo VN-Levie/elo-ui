@@ -79,7 +79,8 @@ async function fetchPlayersWithPagination(showMainLoading = true) {
         leaderboardTotalPlayers.value = 0;
         leaderboardTotalPages.value = 1;
     } finally {
-        if (showMainLoading) isLoadingPlayers.value = false;
+        if (showMainLoading ) isLoadingPlayers.value = false;
+
     }
 }
 
@@ -97,7 +98,7 @@ function requestSimulation() {
     if (globalSimStatus.value?.isRunning) { generalErrorMessage.value = "A simulation is already in progress globally."; return; }
     if (simulateCount.value < 1 || simulateCount.value > 10000) { generalErrorMessage.value = 'Matches must be between 1 and 10000.'; return; }
     if (socket.value && socket.value.connected) {
-        isLoadingPlayers.value = true;
+        // isLoadingPlayers.value = true;
         successMessage.value = ''; generalErrorMessage.value = '';
         socket.value.emit('start_simulation_job', { numMatches: simulateCount.value });
     } else { generalErrorMessage.value = 'Not connected to simulation server. Please check or refresh.'; }
@@ -248,13 +249,13 @@ onMounted(async () => {
                 </div>
             </div>
         </div>
-
+        <!-- 
         <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
             {{ successMessage }} <button type="button" class="btn-close" @click="successMessage = ''" aria-label="Close"></button>
         </div>
         <div v-if="generalErrorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ generalErrorMessage }} <button type="button" class="btn-close" @click="generalErrorMessage = ''" aria-label="Close"></button>
-        </div>
+        </div> -->
 
         <div class="row gy-4">
             <div class="col-lg-12">
@@ -297,7 +298,10 @@ onMounted(async () => {
                                 <tbody>
                                     <tr v-for="(player, index) in players" :key="player.playerId" @click="goToPlayerProfile(player.playerId)" style="cursor: pointer;">
                                         <th scope="row">{{ (leaderboardCurrentPage - 1) * leaderboardItemsPerPage + index + 1 }}</th>
-                                        <td>{{ player.playerName }}</td>
+                                        <td>
+                                            {{ player.playerName }}
+                                            <i class="fa-solid fa-eye"></i>
+                                        </td>
                                         <td>{{ player.elo.toFixed(0) }}</td>
                                         <td>{{ player.gamesPlayed }}</td>
                                     </tr>
