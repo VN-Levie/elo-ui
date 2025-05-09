@@ -288,7 +288,7 @@ watch(() => route.params.playerId, (newId) => { if (newId) fetchPlayerProfile(ne
                                 <tr v-for="match in sortedMatchHistory" :key="match.matchId || match.timestamp" @click="goToMatchDetail(match.matchId)" :class="{ 'table-row-clickable': match.matchId }">
                                     <td><small>{{ match.matchId || 'N/A' }}</small></td>
                                     <td>
-                                        <img v-if="match.championPlayed && match.championPlayed.championId" :src="`https://ddragon.leagueoflegends.com/cdn/14.4.1/img/champion/${getDDragonKeyFromName(match.championPlayed.championName)}.png`" :alt="match.championPlayed.championName" width="24" height="24" class="me-1 rounded-circle champion-icon-fallback" @error="($event.target.style.display = 'none')">
+                                        <img v-if="match.championPlayed && match.championPlayed.championId" :src="`https://ddragon.leagueoflegends.com/cdn/14.4.1/img/champion/${match.championPlayed.championId}.png`" :alt="match.championPlayed.championName" width="24" height="24" class="me-1 rounded-circle champion-icon-fallback" @error="($event.target.style.display = 'none')">
                                         {{ match.championPlayed?.championName || 'N/A' }}
                                     </td>
                                     <td>{{ match.role || 'N/A' }}</td>

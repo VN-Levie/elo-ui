@@ -300,7 +300,7 @@ watch(() => route.params.matchId, (newId) => { if (newId) fetchMatchDetails(newI
                                 </td>
                                 <td>{{ player.playerName }}</td>
                                 <td>
-                                    <img v-if="player.championName" :src="`https://ddragon.leagueoflegends.com/cdn/14.4.1/img/champion/${player.championName.replace(/\s+|['&]/g, '')}.png`" :alt="player.championName" width="24" height="24" class="me-1 rounded-circle champ-icon" @error="($event.target.style.display='none')">
+                                    <img v-if="player.championName" :src="`https://ddragon.leagueoflegends.com/cdn/14.4.1/img/champion/${player.championId}.png`" :alt="player.championName" width="24" height="24" class="me-1 rounded-circle champ-icon" @error="($event.target.style.display='none')">
                                     {{ player.championName }}
                                 </td>
                                 <td>{{ player.role }}</td>
