@@ -25,7 +25,7 @@
     --lol-grey-border: #2c3e50;
 
     --lol-secondary: #785A28;
-    --lol-accent: #0BC6E3;
+    --lol-accent: #1d627a;
     --lol-text-light: #C8AA6E;
     --lol-text-dark: #A092B1;
     --lol-bg-dark: #111318;
@@ -47,6 +47,12 @@
 
     --chartjs-legend-color: var(--lol-text-light);
     --chartjs-axis-color: var(--lol-text-light);
+
+    --lol-uikit-gold: #CDBE91;
+    --lol-uikit-gold-dark: #785A28;
+    --lol-uikit-blue: #0BC6E3;
+    --lol-uikit-bg: #1E2328;
+    --lol-uikit-border: #C4A566;
 }
 
 /* --- Base Styles --- */
@@ -82,10 +88,12 @@ body::before {
 */
 
 /* --- Typography --- */
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--lol-font-headings);
+h1, h2, h3, h4, h5, h6,
+.card-header, .card-header h5, .card-header h4,
+.stat-item, .display-5, .display-6 {
+    font-family: "beaufort-bold", 'Optimus Princeps', 'Montserrat', Arial, sans-serif !important;
+    letter-spacing: 1px;
     color: var(--lol-blue-bright);
-    letter-spacing: 0.5px;
 }
 .display-5, .display-6 {
     color: var(--lol-gold-primary);
@@ -175,6 +183,10 @@ hr {
 }
 
 /* --- Cards --- */
+.card, .card-header, .card-footer {
+    border-image-slice: 1;
+    border-image-source: linear-gradient(var(--lol-uikit-gold-dark), var(--lol-uikit-gold-dark));
+}
 .card {
     background-color: var(--lol-bg-panel);
     border: 1px solid var(--lol-secondary);
@@ -186,8 +198,8 @@ hr {
 }
 .card-header {
     background: linear-gradient(90deg, var(--lol-primary) 80%, rgba(11,198,227,0.08) 100%);
-    color: var(--lol-accent);
-    border-bottom: 2.5px solid var(--lol-gold-dark);
+    color: var(--lol-uikit-blue);
+    border-bottom: 2.5px solid var(--lol-uikit-gold-dark);
     font-family: var(--lol-font-headings);
     padding: 0.75rem 1.25rem;
     text-transform: uppercase;
@@ -219,6 +231,10 @@ hr {
 .table-striped tbody tr:nth-of-type(odd) {
     background-color: rgba(40, 45, 55, 0.3);
 }
+/* Remove zebra striping for Match Scoreboard */
+.scoreboard-unified.table-striped tbody tr:nth-of-type(odd) {
+    background-color: transparent !important;
+}
 .table-hover tbody tr:hover td,
 .table-hover tbody tr:hover th {
     background-color: rgba(11, 198, 227, 0.15) !important;
@@ -246,47 +262,124 @@ hr {
     font-size: 0.8em;
 }
 
+/* LOL Table - dùng cho Match History và Leaderboard */
+.lol-table th,
+.lol-table td {
+    vertical-align: middle;
+    font-size: 0.875rem;
+    background: none;
+    color: var(--lol-text-light);
+    border-color: var(--lol-gold-dark);
+}
+
+.lol-table thead,
+.lol-table .table-dark,
+.lol-table thead.table-dark th {
+    background: linear-gradient(90deg, var(--lol-primary) 80%, rgba(200,170,110,0.08) 100%) !important;
+    color: var(--lol-gold-primary) !important;
+    border-bottom: 2px solid var(--lol-gold-dark) !important;
+    font-family: var(--lol-font-headings);
+    font-size: 1.05em;
+    letter-spacing: 0.5px;
+}
+
+.lol-table .table-row-clickable:hover,
+.lol-table tbody tr:hover {
+    cursor: pointer;
+    background-color: rgba(11,198,227,0.08);
+}
+
+.lol-table .sticky-top {
+    top: -1px;
+    background-color: var(--lol-primary) !important;
+    color: var(--lol-gold-primary) !important;
+}
+
+/* Make streak adjustment text more vibrant in tables */
+.lol-table .text-success-emphasis {
+    color: #4cffb0 !important; /* bright green */
+    font-weight: bold;
+    text-shadow: 0 0 1px #4cffb0, 0 0 1px #fff;
+}
+.lol-table .text-danger-emphasis {
+    color: #ff6b8b !important; /* bright pinkish red */
+    font-weight: bold;
+    text-shadow: 0 0 1px #ff6b8b, 0 0 1px #fff;
+}
+
 /* --- Forms --- */
+input[type="text"], input[type="number"], .form-control, .lol-textbox {
+    font-family: "beaufort-regular", 'Montserrat', Arial, sans-serif !important;
+    background: #000306;
+    color: #EFE5D1;
+    border: 2px solid;
+    border-image-slice: 1;
+    border-image-source: linear-gradient(#785A28, #785A28);
+    border-radius: 0.25rem;
+    outline: none;
+    transition: border-image-source 0.2s, background 0.2s;
+    box-shadow: none !important; /* Ghi đè bootstrap */
+}
+input[type="text"]:focus, input[type="number"]:focus, .form-control:focus, .lol-textbox:focus {
+    border-image-source: linear-gradient(#795B29, #C6A86D);
+    background: linear-gradient(#060E16, #151C22);
+    color: #fff;
+    box-shadow: none !important; /* Ghi đè bootstrap */
+}
+input[type="text"]:disabled, input[type="number"]:disabled, .form-control:disabled, .lol-textbox:disabled {
+    color: #3C3C41 !important;
+    background: #1E2328 !important;
+    border-image-source: linear-gradient(#5C5B57, #5C5B57) !important;
+}
 .form-label {
     color: var(--lol-text-secondary);
     font-size: 0.9rem;
     opacity: 0.9;
 }
-.form-control, .form-select {
-    background-color: rgba(0,0,0,0.2);
-    border: 1px solid var(--lol-secondary);
-    color: var(--lol-text-light);
-    border-radius: 0.25rem;
-}
-.form-control:focus, .form-select:focus {
-    background-color: rgba(0,0,0,0.3);
-    border-color: var(--lol-accent);
-    color: #fff;
-    box-shadow: 0 0 0 0.25rem var(--lol-blue-glow);
-}
-.form-control::placeholder {
-    color: rgba(200, 170, 110, 0.6);
-}
 
 /* --- Buttons --- */
-.btn {
-    font-family: var(--lol-font-headings);
+.btn, .lol-btn, lol-button, lol-round-button, lol-transparent-button {
+    font-family: "beaufort-bold", 'Optimus Princeps', 'Montserrat', Arial, sans-serif !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-radius: var(--lol-border-radius);
     padding: 0.5rem 1.25rem;
-    transition: all 0.2s ease;
+    background-color: #1E2328;
+    color: var(--lol-uikit-gold);
+    border: 2px solid;
+    border-image-slice: 1;
+    border-image-source: linear-gradient(var(--lol-uikit-gold), var(--lol-uikit-gold-dark));
+    text-shadow: 0 0 2px #000;
+    transition: all 0.2s, border-image-source 0.2s, color 0.2s, background 0.2s;
+}
+.btn:hover, .lol-btn:hover, lol-button:hover, lol-round-button:hover, lol-transparent-button:hover {
+    border-image-source: linear-gradient(#EBE1CC, #C5993E);
+    color: #F0E6D2;
+    background: linear-gradient(#1F2428, #393934);
+    box-shadow: 0 0 8px 0 #CDBE91;
+}
+.btn:active, .lol-btn:active, lol-button:active, lol-round-button:active, lol-transparent-button:active {
+    border-image-source: linear-gradient(#5C5B57, #5C5B57);
+    background: #1E2328;
+    color: #5C5B57;
+}
+.btn:disabled, .lol-btn:disabled, lol-button:disabled, lol-round-button:disabled, lol-transparent-button:disabled {
+    color: #3C3C41 !important;
+    background: #1E2328 !important;
+    border-image-source: linear-gradient(#5C5B57, #5C5B57) !important;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 .btn-primary {
-    background-color: var(--lol-accent);
-    border-color: var(--lol-accent);
-    color: var(--lol-bg-dark);
+    background-color: var(--lol-primary);
+    /* border-color: var(--lol-accent); */
+    /* color: var(--lol-bg-dark); */
     font-weight: 500;
 }
 .btn-primary:hover, .btn-primary:focus {
-    background-color: #0dade0;
+    /* background-color: #0dade0; */
     border-color: #0dade0;
-    color: var(--lol-bg-dark);
+    /* color: var(--lol-bg-dark); */
     box-shadow: 0 0 8px rgba(11, 198, 227, 0.5);
 }
 .btn-secondary, .btn-outline-secondary {
@@ -295,7 +388,7 @@ hr {
 }
 .btn-secondary:hover, .btn-outline-secondary:hover, .btn-outline-secondary:focus {
     background-color: var(--lol-secondary);
-    color: var(--lol-bg-dark);
+    /* color: var(--lol-bg-dark); */
     border-color: var(--lol-secondary);
 }
 .btn-danger {
@@ -309,6 +402,114 @@ hr {
 }
 .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
 .btn-lg { padding: 0.75rem 1.5rem; font-size: 1.1rem; }
+
+/* --- LOL DROPDOWN: ĐỒNG BỘ, HOÀN CHỈNH, GHI ĐÈ BOOTSTRAP --- */
+.lol-dropdown, select.lol-dropdown, .form-select.lol-dropdown {
+    font-family: "beaufort-regular", 'Montserrat', Arial, sans-serif !important;
+    background: #0F171D;
+    color: #A09B8C;
+    border: 2px solid;
+    border-image-slice: 1;
+    border-image-source: linear-gradient(#C5A463, #6D5926);
+    border-radius: 0.25rem;
+    padding: 5px 35px 5px 10px;
+    appearance: none;
+    outline: none;
+    transition: border-image-source 0.2s, background 0.2s;
+    box-shadow: none !important;
+    position: relative;
+    min-width: 120px;
+    cursor: pointer;
+}
+.lol-dropdown:focus, select.lol-dropdown:focus, .form-select.lol-dropdown:focus {
+    border-image-source: linear-gradient(#F0E5D0, #C89C3E);
+    background: linear-gradient(#10171E, #2C2E2A);
+    color: #F0E6D2;
+    box-shadow: none !important;
+}
+.lol-dropdown:disabled, select.lol-dropdown:disabled, .form-select.lol-dropdown:disabled {
+    color: #3C3C41 !important;
+    background: #1E2328 !important;
+    border-image-source: linear-gradient(#5C5B57, #5C5B57) !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+/* Custom arrow for dropdown */
+.lol-dropdown {
+    background-image: url('/lol-uikit/img/up-down-arrow.png');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px 18px;
+}
+.lol-dropdown:disabled {
+    background-image: url('/lol-uikit/img/up-down-arrow-disabled.png');
+}
+
+/* Remove default arrow for select (webkit, firefox) */
+.lol-dropdown::-ms-expand { display: none; }
+.lol-dropdown::-webkit-input-placeholder { color: #757575; }
+.lol-dropdown::-webkit-select-placeholder { color: #757575; }
+.lol-dropdown::-webkit-search-decoration,
+.lol-dropdown::-webkit-search-cancel-button,
+.lol-dropdown::-webkit-search-results-button,
+.lol-dropdown::-webkit-search-results-decoration { display: none; }
+.lol-dropdown option {
+    background: #010A13;
+    color: #C8BA8E;
+}
+
+/* --- LOL PAGINATION CONTROLS --- */
+.pagination {
+    --bs-pagination-bg: #1E2328;
+    --bs-pagination-border-color: var(--lol-uikit-gold-dark);
+    --bs-pagination-color: var(--lol-uikit-gold);
+    --bs-pagination-hover-bg: #23272e;
+    --bs-pagination-hover-color: #F0E6D2;
+    --bs-pagination-active-bg: #393934;
+    --bs-pagination-active-color: #F0E6D2;
+    --bs-pagination-focus-box-shadow: none;
+    --bs-pagination-border-radius: var(--lol-border-radius);
+    font-family: "beaufort-bold", 'Optimus Princeps', 'Montserrat', Arial, sans-serif !important;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    margin-bottom: 0;
+}
+.page-item {
+    margin: 0 2px;
+}
+.page-link {
+    background-color: #1E2328;
+    color: var(--lol-uikit-gold);
+    border: 2px solid;
+    border-image-slice: 1;
+    border-image-source: linear-gradient(var(--lol-uikit-gold), var(--lol-uikit-gold-dark));
+    border-radius: var(--lol-border-radius) !important;
+    font-family: "beaufort-bold", 'Optimus Princeps', 'Montserrat', Arial, sans-serif !important;
+    letter-spacing: 1px;
+    padding: 0.4rem 1.1rem;
+    transition: all 0.2s, border-image-source 0.2s, color 0.2s, background 0.2s;
+    box-shadow: none !important;
+}
+.page-link:hover, .page-link:focus {
+    border-image-source: linear-gradient(#EBE1CC, #C5993E);
+    color: #F0E6D2;
+    background: linear-gradient(#1F2428, #393934);
+    box-shadow: 0 0 8px 0 #CDBE91;
+    outline: none;
+}
+.page-item.active .page-link, .page-item.active .page-link:focus, .page-item.active .page-link:hover {
+    background: linear-gradient(#1F2428, #393934);
+    color: #F0E6D2;
+    border-image-source: linear-gradient(#EBE1CC, #C5993E);
+    box-shadow: 0 0 8px 0 #CDBE91;
+}
+.page-item.disabled .page-link {
+    color: #3C3C41 !important;
+    background: #1E2328 !important;
+    border-image-source: linear-gradient(#5C5B57, #5C5B57) !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 
 /* --- Modals --- */
 .modal-content {
@@ -384,6 +585,7 @@ hr {
     border-color: var(--lol-blue-bright);
 }
 .player-profile-view .stat-item {
+    font-family: "beaufort-bold", 'Optimus Princeps', 'Montserrat', Arial, sans-serif !important;
     background-color: rgba(255,255,255,0.03);
     border: 1px solid var(--lol-grey-border);
     transition: background-color 0.2s;
@@ -448,10 +650,7 @@ hr {
 }
 
 /* Chart.js Canvas container */
-.chart-container, div[style*="height:280px"], div[style*="height:300px"], div[style*="height:350px"], div[style*="height:400px"], div[style*="height:500px"] {
-    padding: 0.5rem;
-    border-radius: var(--lol-border-radius);
-}
+
 
 /* === LOL THEME ENHANCEMENTS (Tiếp theo) === */
 
@@ -508,16 +707,24 @@ body::before {
 
 /* Chart container: dark background, gold border, subtle glow */
 .chart-container {
-    background: linear-gradient(135deg, rgba(10,50,60,0.98) 80%, rgba(11,198,227,0.08) 100%);
-    border: 1.5px solid var(--lol-gold-dark);
+    font-family: "beaufort-regular", 'Montserrat', Arial, sans-serif !important;
+    background: linear-gradient(135deg, #0A323C 80%, rgba(11,198,227,0.08) 100%);
+    border: 1.5px solid var(--lol-uikit-gold-dark);
     box-shadow: 0 0 18px 0 rgba(11,198,227,0.08), 0 2px 8px rgba(0,0,0,0.25);
+    color: var(--lol-uikit-gold);
     padding: 1.25rem;
     border-radius: var(--lol-border-radius);
-    color: var(--lol-text-light);
     transition: box-shadow 0.2s;
+    /* Thêm hiệu ứng glow nhẹ cho radar chart */
+    /* Nếu muốn nổi bật hơn, có thể tăng giá trị box-shadow */
 }
 .chart-container:hover {
     box-shadow: 0 0 24px 0 var(--lol-blue-glow), 0 4px 16px rgba(0,0,0,0.35);
+}
+
+/* Ensure chart canvas itself is transparent to show container background */
+.chart-container > canvas {
+    background-color: transparent !important;
 }
 
 /* Chart.js axis, legend, and tooltip text color (for dark bg) */
@@ -559,4 +766,38 @@ body::before {
 /* Spinner color for loading in charts/cards */
 .spinner-border {
     color: var(--lol-accent) !important;
+}
+
+/* --- LOL-UIKIT FONT INTEGRATION --- */
+@font-face {
+    font-family: "beaufort-bold";
+    src: url("/lol-uikit/font/Beaufort-Bold.ttf");
+}
+@font-face {
+    font-family: "beaufort-regular";
+    src: url("/lol-uikit/font/Beaufort-Regular.ttf");
+}
+@font-face {
+    font-family: "beaufort-italic";
+    src: url("/lol-uikit/font/Beaufort-Italic.ttf");
+}
+
+/* Uniform control height for LeaderboardView controls */
+.leaderboard-view .form-control,
+.leaderboard-view .lol-textbox,
+.leaderboard-view .form-select,
+.leaderboard-view .lol-dropdown,
+.leaderboard-view .btn,
+.leaderboard-view .lol-button,
+.leaderboard-view .btn-sm {
+    min-height: 36px;
+    height: 36px;
+    font-size: 1rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    box-sizing: border-box;
+}
+.leaderboard-view .form-label {
+    margin-bottom: 0;
+    line-height: 1.2;
 }

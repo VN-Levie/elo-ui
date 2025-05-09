@@ -16,7 +16,7 @@ defineProps({
 });
 </script>
 <template>
-  <div style="height:300px; width:100%;">
+  <div style="height:400px; width:100%">
     <Bar :data="chartData" :options="chartOptions" />
   </div>
 </template>

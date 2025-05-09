@@ -28,9 +28,6 @@ const eloDistributionData = ref(null);
 const isLoadingEloDistribution = ref(false);
 const eloDistError = ref('');
 
-const showLeaderboardAsChart = ref(false); // Sẽ không áp dụng cho bảng phân trang
-const MAX_PLAYERS_FOR_CHART_VIEW = 25; // Không còn dùng trực tiếp cho logic phân trang bảng
-
 const resetConfirmModalRef = ref(null);
 let resetModalInstance = null;
 const isResetting = ref(false);
@@ -38,15 +35,16 @@ const isResetting = ref(false);
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 async function fetchData(endpoint, loadingVar, errorVar, dataVar, processFn = null) {
-  loadingVar.value = true; errorVar.value = '';
-  try {
-    const response = await fetch(`${API_BASE_URL}/stats/${endpoint}`);
-    if (!response.ok) { const errRes = await response.json().catch(()=>({})); throw new Error(errRes.message || `Err ${endpoint}`);}
-    const result = await response.json();
-    if (result.success) dataVar.value = processFn ? processFn(result.data) : result.data;
-    else throw new Error(result.message || `Unknown err ${endpoint}`);
-  } catch (error) { console.error(`${endpoint} Error:`, error); errorVar.value = error.message; dataVar.value = null;
-  } finally { loadingVar.value = false; }
+    loadingVar.value = true; errorVar.value = '';
+    try {
+        const response = await fetch(`${API_BASE_URL}/stats/${endpoint}`);
+        if (!response.ok) { const errRes = await response.json().catch(() => ({})); throw new Error(errRes.message || `Err ${endpoint}`); }
+        const result = await response.json();
+        if (result.success) dataVar.value = processFn ? processFn(result.data) : result.data;
+        else throw new Error(result.message || `Unknown err ${endpoint}`);
+    } catch (error) {
+        console.error(`${endpoint} Error:`, error); errorVar.value = error.message; dataVar.value = null;
+    } finally { loadingVar.value = false; }
 }
 
 async function fetchPlayersWithPagination(showMainLoading = true) {
@@ -93,30 +91,31 @@ async function fetchAllInitialData(showMainLoading = true) {
 
 
 function requestSimulation() {
-  if (globalSimStatus.value?.isRunning) { generalErrorMessage.value = "A simulation is already in progress globally."; return; }
-  if (simulateCount.value < 1 || simulateCount.value > 10000) { generalErrorMessage.value = 'Matches must be between 1 and 10000.'; return; }
-  if (socket.value && socket.value.connected) {
-    successMessage.value = ''; generalErrorMessage.value = ''; 
-    socket.value.emit('start_simulation_job', { numMatches: simulateCount.value });
-  } else { generalErrorMessage.value = 'Not connected to simulation server. Please check or refresh.'; }
+    if (globalSimStatus.value?.isRunning) { generalErrorMessage.value = "A simulation is already in progress globally."; return; }
+    if (simulateCount.value < 1 || simulateCount.value > 10000) { generalErrorMessage.value = 'Matches must be between 1 and 10000.'; return; }
+    if (socket.value && socket.value.connected) {
+        successMessage.value = ''; generalErrorMessage.value = '';
+        socket.value.emit('start_simulation_job', { numMatches: simulateCount.value });
+    } else { generalErrorMessage.value = 'Not connected to simulation server. Please check or refresh.'; }
 }
 
 function openResetModal() { if (resetModalInstance) resetModalInstance.show(); }
 async function confirmResetSystem() {
-  if (resetModalInstance) resetModalInstance.hide();
-  isResetting.value = true; generalErrorMessage.value = ''; successMessage.value = '';
-  try {
-    const response = await fetch(`${API_BASE_URL}/players/initialize`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ forceReset: true })
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.message || `HTTP error! Status: ${response.status}`);
-    successMessage.value = result.message || 'System data reset successfully.';
-    leaderboardCurrentPage.value = 1; // Reset to first page
-    await fetchAllInitialData(false);
-  } catch (error) { console.error("Reset error:", error); generalErrorMessage.value = `System reset failed: ${error.message}`;
-  } finally { isResetting.value = false; }
+    if (resetModalInstance) resetModalInstance.hide();
+    isResetting.value = true; generalErrorMessage.value = ''; successMessage.value = '';
+    try {
+        const response = await fetch(`${API_BASE_URL}/players/initialize`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ forceReset: true })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || `HTTP error! Status: ${response.status}`);
+        successMessage.value = result.message || 'System data reset successfully.';
+        leaderboardCurrentPage.value = 1; // Reset to first page
+        await fetchAllInitialData(false);
+    } catch (error) {
+        console.error("Reset error:", error); generalErrorMessage.value = `System reset failed: ${error.message}`;
+    } finally { isResetting.value = false; }
 }
 
 function goToPlayerProfile(playerId) { router.push({ name: 'PlayerProfile', params: { playerId: playerId } }); }
@@ -194,8 +193,8 @@ onMounted(async () => {
         <div class="controls-section card shadow-sm mb-4">
             <div class="card-header bg-dark d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">System Controls</h5>
-                 <button class="btn btn-danger btn-sm" @click="openResetModal" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill me-1" viewBox="0 0 16 16"><path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/></svg>
+                <button class="btn btn-danger btn-sm lol-button" @click="openResetModal" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers">
+                    <i class="fa-solid fa-trash-can me-1"></i>
                     Reset System Data
                 </button>
             </div>
@@ -203,37 +202,30 @@ onMounted(async () => {
                 <div class="row gy-3 gx-3 align-items-end mb-3">
                     <div class="col-md-auto">
                         <label for="simulateCountInput" class="form-label fw-medium">Matches to Simulate:</label>
-                        <input type="number" class="form-control" id="simulateCountInput" v-model.number="simulateCount" min="1" max="10000" style="width: 150px;" :disabled="globalSimStatus?.isRunning || isResetting">
+                        <input type="number" class="form-control lol-textbox" id="simulateCountInput" v-model.number="simulateCount" min="1" max="10000" style="width: 150px;" :disabled="globalSimStatus?.isRunning || isResetting">
                     </div>
                     <div class="col-md-auto">
-                        <button @click="requestSimulation" class="btn btn-primary btn-lg px-4" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers">
+                        <button @click="requestSimulation" class="btn btn-primary btn-sm px-4 lol-button" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers">
                             <span v-if="globalSimStatus?.isRunning && globalSimStatus?.taskId" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <template v-else>
+                                <i class="fa-solid fa-play me-1"></i>
+                            </template>
                             {{ globalSimStatus?.isRunning ? `Simulating...` : `Run Simulation` }}
-                        </button>
-                    </div>
-                    <div class="col-md-auto ms-md-auto">
-                        <label for="leaderboardItemsPerPageSelect" class="form-label fw-medium">Players per Page:</label>
-                        <select class="form-select" id="leaderboardItemsPerPageSelect" v-model.number="leaderboardItemsPerPage" style="width: 100px;" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers">
-                            <option v-for="option in limitOptions" :key="option" :value="option">{{ option }}</option>
-                        </select>
-                    </div>
-                     <div class="col-md-auto">
-                        <button @click="() => fetchAllInitialData()" class="btn btn-outline-secondary" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers" title="Refresh All Data">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>
-                            Refresh All
                         </button>
                     </div>
                 </div>
 
-                <div v-if="showGlobalSimBannerInControls && globalSimStatus" class="global-simulation-controls-display mt-3 p-3 border rounded bg-light-subtle">
+                <div v-if="showGlobalSimBannerInControls && globalSimStatus" class="global-simulation-controls-display mt-3 p-3 border rounded bg-lol-info">
                     <h6 class="mb-2">System Simulation Status:</h6>
                     <div v-if="globalSimStatus.isRunning && globalSimStatus.taskId">
-                        <p class="mb-1 small"> Task <strong>{{ globalSimStatus.taskId }}</strong> running.
-                            <span v-if="globalSimStatus.requestedByInfo?.socketId">By: {{ globalSimStatus.requestedByInfo.socketId.substring(0,6) }}...</span>
+                        <p class="mb-1 small">
+                            Task <strong>{{ globalSimStatus.taskId }}</strong> running.
+                            <span v-if="globalSimStatus.requestedByInfo?.socketId">By: {{ globalSimStatus.requestedByInfo.socketId.substring(0, 6) }}...</span>
                         </p>
-                        <div class="progress" style="height: 25px; font-size: 0.85rem;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-info text-dark" role="progressbar" 
-                                 :style="{ width: (globalSimStatus.totalMatches > 0 ? (globalSimStatus.completedMatches / globalSimStatus.totalMatches * 100) : 0) + '%' }" 
+                        <div class="progress lol-progress" style="height: 25px; font-size: 0.85rem;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-lol-accent text-dark"
+                                 role="progressbar"
+                                 :style="{ width: (globalSimStatus.totalMatches > 0 ? (globalSimStatus.completedMatches / globalSimStatus.totalMatches * 100) : 0) + '%' }"
                                  :aria-valuenow="globalSimStatus.completedMatches" aria-valuemin="0" :aria-valuemax="globalSimStatus.totalMatches">
                                 <strong>{{ globalSimStatus.completedMatches }} / {{ globalSimStatus.totalMatches }}</strong>
                             </div>
@@ -241,55 +233,73 @@ onMounted(async () => {
                         <p class="mt-1 mb-0 small text-muted fst-italic">{{ globalSimStatus.statusMessage }}</p>
                     </div>
                     <div v-else-if="globalSimStatus.taskId && !globalSimStatus.isRunning">
-                         <p class="mb-1" :class="globalSimStatus.statusMessage.toLowerCase().includes('error') || globalSimStatus.statusMessage.toLowerCase().includes('cancel') ? 'text-danger' : 'text-success'">
+                        <p class="mb-1" :class="globalSimStatus.statusMessage.toLowerCase().includes('error') || globalSimStatus.statusMessage.toLowerCase().includes('cancel') ? 'text-danger' : 'text-success'">
                             Task <strong>{{ globalSimStatus.taskId }}</strong> {{ globalSimStatus.statusMessage.toLowerCase().includes('completed') || globalSimStatus.statusMessage.toLowerCase().includes('finished') ? 'finished' : 'status' }}.
-                         </p>
-                         <p class="mb-0 small text-muted fst-italic">{{ globalSimStatus.statusMessage }}</p>
+                        </p>
+                        <p class="mb-0 small text-muted fst-italic">{{ globalSimStatus.statusMessage }}</p>
                     </div>
-                     <div v-else class="text-muted"> {{ globalSimStatus.statusMessage || "System is Idle." }} </div>
+                    <div v-else class="text-muted"> {{ globalSimStatus.statusMessage || "System is Idle." }} </div>
                 </div>
             </div>
         </div>
-        
-        <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ successMessage }} <button type="button" class="btn-close" @click="successMessage = ''" aria-label="Close"></button>
+
+        <div v-if="successMessage" class="alert alert-success alert-dismissible fade show lol-alert lol-alert-success" role="alert">
+            {{ successMessage }}
+            <button type="button" class="btn-close btn-sm" @click="successMessage = ''" aria-label="Close"></button>
         </div>
-        <div v-if="generalErrorMessage" class="alert alert-danger alert-dismissible fade show" role="alert"> 
-            {{ generalErrorMessage }} <button type="button" class="btn-close" @click="generalErrorMessage = ''" aria-label="Close"></button>
+        <div v-if="generalErrorMessage" class="alert alert-danger alert-dismissible fade show lol-alert lol-alert-danger" role="alert">
+            {{ generalErrorMessage }}
+            <button type="button" class="btn-close btn-sm" @click="generalErrorMessage = ''" aria-label="Close"></button>
         </div>
 
         <div class="row gy-4">
-            <div class="col-lg-7">
+            <div class="col-lg-12">
                 <div class="leaderboard-section card shadow-sm h-100">
                     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">Leaderboard</h4>
-                        <!-- Chart toggle removed as pagination makes chart less ideal for full list -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="leaderboardItemsPerPageSelect" class="form-label fw-medium mb-0 me-2" style="font-size: 0.95em;">Players per Page:</label>
+                            <select class="form-select lol-dropdown" id="leaderboardItemsPerPageSelect" v-model.number="leaderboardItemsPerPage" style="width: 100px;" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers">
+                                <option v-for="option in limitOptions" :key="option" :value="option">{{ option }}</option>
+                            </select>
+                            <button @click="() => fetchAllInitialData()" class="btn btn-outline-secondary btn-sm lol-button" :disabled="globalSimStatus?.isRunning || isResetting || isLoadingPlayers" title="Refresh All Data">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body d-flex flex-column">
                         <div v-if="isLoadingPlayers && players.length === 0 && !globalSimStatus?.isRunning && !isResetting" class="d-flex justify-content-center align-items-center flex-grow-1" style="min-height: 300px;">
                             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"><span class="visually-hidden">Loading...</span></div>
                         </div>
                         <div v-else-if="!globalSimStatus?.isRunning && !isLoadingPlayers && !isResetting && players.length === 0 && !generalErrorMessage" class="alert alert-info flex-grow-1">No players to display.</div>
-                        
+
                         <div v-if="players.length > 0" class="table-responsive flex-grow-1">
-                            <table class="table table-striped table-hover align-middle">
-                                <thead class="table-dark sticky-top"><tr><th>#</th><th>Player</th><th>Elo</th><th>Games</th></tr></thead>
-                                <tbody><tr v-for="(player, index) in players" :key="player.playerId" @click="goToPlayerProfile(player.playerId)" style="cursor: pointer;">
-                                    <th scope="row">{{ (leaderboardCurrentPage - 1) * leaderboardItemsPerPage + index + 1 }}</th>
-                                    <td>{{ player.playerName }}</td>
-                                    <td>{{ player.elo.toFixed(0) }}</td><td>{{ player.gamesPlayed }}</td>
-                                </tr></tbody>
+                            <table class="table table-striped table-hover align-middle lol-table">
+                                <thead class="table-dark sticky-top">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Player</th>
+                                        <th>Elo</th>
+                                        <th>Games</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(player, index) in players" :key="player.playerId" @click="goToPlayerProfile(player.playerId)" style="cursor: pointer;">
+                                        <th scope="row">{{ (leaderboardCurrentPage - 1) * leaderboardItemsPerPage + index + 1 }}</th>
+                                        <td>{{ player.playerName }}</td>
+                                        <td>{{ player.elo.toFixed(0) }}</td>
+                                        <td>{{ player.gamesPlayed }}</td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
-                         <!-- Pagination Controls -->
+                        <!-- Pagination Controls -->
                         <nav v-if="leaderboardTotalPages > 1 && players.length > 0" aria-label="Leaderboard navigation" class="mt-auto pt-3">
                             <ul class="pagination justify-content-center mb-0">
                                 <li class="page-item" :class="{ disabled: leaderboardCurrentPage === 1 }">
                                     <a class="page-link" href="#" @click.prevent="changeLeaderboardPage(leaderboardCurrentPage - 1)">« Prev</a>
                                 </li>
-                                <li v-for="pageNumber in paginationRange" :key="pageNumber" 
-                                    class="page-item" 
-                                    :class="{ active: pageNumber === leaderboardCurrentPage, disabled: pageNumber === '...' }">
+                                <li v-for="pageNumber in paginationRange" :key="pageNumber" class="page-item" :class="{ active: pageNumber === leaderboardCurrentPage, disabled: pageNumber === '...' }">
                                     <a class="page-link" href="#" @click.prevent="pageNumber !== '...' && changeLeaderboardPage(pageNumber)">{{ pageNumber }}</a>
                                 </li>
                                 <li class="page-item" :class="{ disabled: leaderboardCurrentPage === leaderboardTotalPages }">
@@ -300,36 +310,25 @@ onMounted(async () => {
                     </div>
                 </div>
             </div>
-            <div class="col-lg-5">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-dark text-white"><h5 class="mb-0">Player Elo Distribution</h5></div>
-                    <div class="card-body d-flex align-items-center justify-content-center">
-                        <div v-if="isLoadingEloDistribution" class="text-center"><div class="spinner-border"></div></div>
-                        <div v-else-if="eloDistError" class="alert alert-danger w-100">{{ eloDistError }}</div>
-                        <EloDistributionChart v-if="eloDistributionData" :chartData="eloDistributionData" style="min-height: 300px; height: 100%; max-height: 500px;" />
-                        <div v-else-if="!isLoadingEloDistribution && !eloDistributionData" class="alert alert-info w-100">No Elo distribution data.</div>
-                    </div>
-                </div>
-            </div>
         </div>
-
+        
         <div class="modal fade" ref="resetConfirmModalRef" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header bg-danger text-white">
                         <h5 class="modal-title" id="resetModalLabel">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
                             Confirm System Reset
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <p>Are you sure you want to reset all player data and match history? This action is irreversible and will set all players to 0 Elo and 0 games played.</p>
                         <p class="fw-bold text-danger">All current progress will be lost!</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="isResetting">Cancel</button>
-                        <button type="button" class="btn btn-danger" @click="confirmResetSystem" :disabled="isResetting">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" :disabled="isResetting">Cancel</button>
+                        <button type="button" class="btn btn-danger btn-sm" @click="confirmResetSystem" :disabled="isResetting">
                             <span v-if="isResetting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                             {{ isResetting ? 'Resetting...' : 'Yes, Reset Data' }}
                         </button>
@@ -341,14 +340,87 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.leaderboard-view { max-width: 1600px; margin: auto; }
-.controls-section .card-header, .leaderboard-section .card-header { padding: 0.75rem 1.25rem; }
-.card-header h5, .card-header h4, .card-header h3 { margin-bottom: 0; }
-.sticky-top { top: -1px; background-color: var(--bs-table-bg-thead, #212529); /* Ensure sticky header has background */ }
-.btn-group-sm > .btn { display: flex; align-items: center; justify-content: center; }
-.global-simulation-controls-display { font-size: 0.9rem; }
-.bg-light-subtle { background-color: #f8f9fa !important; }
+.leaderboard-view {
+    max-width: 1600px;
+    margin: auto;
+}
+
+.controls-section .card-header,
+.leaderboard-section .card-header {
+    padding: 0.75rem 1.25rem;
+}
+
+.card-header h5,
+.card-header h4,
+.card-header h3 {
+    margin-bottom: 0;
+}
+
+.btn-group-sm>.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.global-simulation-controls-display {
+    font-size: 0.9rem;
+}
+
+.bg-light-subtle {
+    background-color: #f8f9fa !important;
+}
+
 .table-responsive {
-    overflow-y: auto; /* Ensure vertical scroll if content overflows max-height */
+    overflow-y: auto;
+    /* Ensure vertical scroll if content overflows max-height */
+}
+
+.card-header,
+.card-header h5,
+.card-header h4,
+.btn,
+.lol-button,
+.lol-textbox,
+.lol-dropdown {
+    font-family: "beaufort-bold", 'Optimus Princeps', 'Montserrat', Arial, sans-serif !important;
+}
+
+.pagination,
+.page-link {
+    font-family: "beaufort-bold", 'Optimus Princeps', 'Montserrat', Arial, sans-serif !important;
+    letter-spacing: 1px;
+}
+
+.bg-lol-info {
+    background-color: rgba(11,198,227,0.10) !important;
+}
+.lol-alert-success {
+    background-color: rgba(54, 180, 116, 0.13) !important;
+    color: #36B474 !important;
+    border-left: 4px solid #36B474 !important;
+}
+.lol-alert-danger {
+    background-color: rgba(232, 64, 87, 0.13) !important;
+    color: #E84057 !important;
+    border-left: 4px solid #E84057 !important;
+}
+.lol-progress .progress-bar.bg-lol-accent {
+    background-color: var(--lol-accent) !important;
+    color: #fff !important;
+}
+.btn, .lol-button, .btn-sm {
+    min-width: 120px;
+    min-height: 36px;
+    font-size: 1rem;
+    padding: 0.375rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-sm {
+    font-size: 0.95rem;
+    min-width: 100px;
+    min-height: 32px;
+    padding: 0.25rem 0.75rem;
 }
 </style>
