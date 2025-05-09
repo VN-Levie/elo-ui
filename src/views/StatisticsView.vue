@@ -1,4 +1,3 @@
-// src/views/StatisticsView.vue
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { Bar } from 'vue-chartjs';
@@ -26,6 +25,88 @@ const averageStatsByRole = ref(null);
 const isLoadingAvgStatsByRole = ref(false);
 const avgStatsByRoleError = ref('');
 
+const lolChartFont = "'Optimus Princeps', 'Montserrat', Arial, sans-serif";
+const lolTextColor = "#C8AA6E";
+const lolGridColor = "rgba(200,170,110,0.18)";
+const lolAccent = "#0BC6E3";
+const lolGold = "#C8AA6E";
+const lolRed = "#E84057";
+const lolBg = "#1E2328";
+
+const baseChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: {
+                color: lolTextColor,
+                font: { family: lolChartFont, size: 13 }
+            }
+        },
+        title: {
+            color: lolAccent,
+            font: { family: lolChartFont, size: 18, weight: 'bold' }
+        },
+        tooltip: {
+            backgroundColor: lolBg,
+            titleColor: lolGold,
+            bodyColor: lolTextColor,
+            borderColor: lolAccent,
+            borderWidth: 1,
+            bodyFont: { family: lolChartFont }
+        }
+    },
+    scales: {
+        x: {
+            ticks: { color: lolTextColor, font: { family: lolChartFont } },
+            grid: { color: lolGridColor }
+        },
+        y: {
+            ticks: { color: lolTextColor, font: { family: lolChartFont } },
+            grid: { color: lolGridColor }
+        }
+    }
+};
+
+const avgKdaByRoleChartOptions = {
+    ...baseChartOptions,
+    plugins: {
+        ...baseChartOptions.plugins,
+        title: { ...baseChartOptions.plugins.title, display: true, text: 'Average KDA by Role' }
+    },
+    scales: {
+        ...baseChartOptions.scales,
+        y: { ...baseChartOptions.scales.y, beginAtZero: true, title: { display: true, text: 'Count', color: lolGold } }
+    }
+};
+
+const avgCsByRoleChartOptions = {
+    ...baseChartOptions,
+    indexAxis: 'y',
+    plugins: {
+        ...baseChartOptions.plugins,
+        legend: { display: false },
+        title: { ...baseChartOptions.plugins.title, display: true, text: 'Average CS by Role' }
+    },
+    scales: {
+        ...baseChartOptions.scales,
+        x: { ...baseChartOptions.scales.x, beginAtZero: true, title: { display: true, text: 'CS', color: lolGold } }
+    }
+};
+
+const avgGoldByRoleChartOptions = {
+    ...baseChartOptions,
+    indexAxis: 'y',
+    plugins: {
+        ...baseChartOptions.plugins,
+        legend: { display: false },
+        title: { ...baseChartOptions.plugins.title, display: true, text: 'Average Gold by Role' }
+    },
+    scales: {
+        ...baseChartOptions.scales,
+        x: { ...baseChartOptions.scales.x, beginAtZero: true, title: { display: true, text: 'Gold', color: lolGold } }
+    }
+};
 
 async function fetchData(endpoint, loadingVar, errorVar, dataVar, processFn = null) {
   loadingVar.value = true;
@@ -83,7 +164,6 @@ const avgKdaByRoleChartData = computed(() => {
         ]
     };
 });
-const avgKdaByRoleChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend:{position:'top'}, title: {display: true, text: 'Average KDA by Role'}}, scales: {y: {beginAtZero: true, title:{display:true, text:'Count'}}} };
 
 const avgCsByRoleChartData = computed(() => {
     if (!averageStatsByRole.value) return null;
@@ -92,7 +172,6 @@ const avgCsByRoleChartData = computed(() => {
         datasets: [{ label: 'Avg CS', data: averageStatsByRole.value.map(r => r.avgCs), backgroundColor: 'rgba(153, 102, 255, 0.7)' }]
     };
 });
-const avgCsByRoleChartOptions = { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend:{display: false}, title: {display: true, text: 'Average CS by Role'}}, scales: {x: {beginAtZero: true, title:{display:true, text:'CS'}}} };
 
 const avgGoldByRoleChartData = computed(() => {
     if (!averageStatsByRole.value) return null;
@@ -101,8 +180,6 @@ const avgGoldByRoleChartData = computed(() => {
         datasets: [{ label: 'Avg Gold', data: averageStatsByRole.value.map(r => r.avgGold), backgroundColor: 'rgba(255, 159, 64, 0.7)' }]
     };
 });
-const avgGoldByRoleChartOptions = { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend:{display: false}, title: {display: true, text: 'Average Gold by Role'}}, scales: {x: {beginAtZero: true, title:{display:true, text:'Gold'}}} };
-
 
 onMounted(() => {
   fetchData('server-summary', isLoadingSummary, summaryError, serverSummary);
@@ -145,7 +222,9 @@ onMounted(() => {
           <div class="card-body d-flex align-items-center justify-content-center">
             <div v-if="isLoadingEloDistribution" class="text-center"><div class="spinner-border"></div></div>
             <div v-else-if="eloDistError" class="alert alert-danger w-100">{{ eloDistError }}</div>
-            <EloDistributionChart v-if="eloDistributionData" :chartData="eloDistributionData" style="min-height: 300px;" />
+            <div v-if="eloDistributionData" class="chart-container" style="min-height: 300px;">
+              <EloDistributionChart :chartData="eloDistributionData" />
+            </div>
             <div v-else-if="!isLoadingEloDistribution && !eloDistributionData" class="alert alert-info w-100">No Elo distribution data.</div>
           </div>
         </div>
@@ -157,7 +236,7 @@ onMounted(() => {
           <div class="card-body d-flex align-items-center justify-content-center">
             <div v-if="isLoadingAvgStatsByRole" class="text-center"><div class="spinner-border"></div></div>
             <div v-else-if="avgStatsByRoleError" class="alert alert-danger w-100">{{ avgStatsByRoleError }}</div>
-            <div v-if="avgKdaByRoleChartData" style="position: relative; height:300px; width:100%;">
+            <div v-if="avgKdaByRoleChartData" class="chart-container" style="position: relative; height:300px; width:100%;">
                 <Bar :data="avgKdaByRoleChartData" :options="avgKdaByRoleChartOptions" />
             </div>
             <div v-else-if="!isLoadingAvgStatsByRole && !averageStatsByRole" class="alert alert-info w-100">No average KDA by role data.</div>
@@ -171,7 +250,7 @@ onMounted(() => {
           <div class="card-body d-flex align-items-center justify-content-center">
             <div v-if="isLoadingAvgStatsByRole" class="text-center"><div class="spinner-border"></div></div>
             <div v-else-if="avgStatsByRoleError" class="alert alert-danger w-100">{{ avgStatsByRoleError }}</div>
-            <div v-if="avgCsByRoleChartData" style="position: relative; height:300px; width:100%;">
+            <div v-if="avgCsByRoleChartData" class="chart-container" style="position: relative; height:300px; width:100%;">
                 <Bar :data="avgCsByRoleChartData" :options="avgCsByRoleChartOptions" />
             </div>
             <div v-else-if="!isLoadingAvgStatsByRole && !averageStatsByRole" class="alert alert-info w-100">No average CS by role data.</div>
@@ -185,7 +264,7 @@ onMounted(() => {
           <div class="card-body d-flex align-items-center justify-content-center">
             <div v-if="isLoadingAvgStatsByRole" class="text-center"><div class="spinner-border"></div></div>
             <div v-else-if="avgStatsByRoleError" class="alert alert-danger w-100">{{ avgStatsByRoleError }}</div>
-            <div v-if="avgGoldByRoleChartData" style="position: relative; height:300px; width:100%;">
+            <div v-if="avgGoldByRoleChartData" class="chart-container" style="position: relative; height:300px; width:100%;">
                 <Bar :data="avgGoldByRoleChartData" :options="avgGoldByRoleChartOptions" />
             </div>
             <div v-else-if="!isLoadingAvgStatsByRole && !averageStatsByRole" class="alert alert-info w-100">No average Gold by role data.</div>
@@ -199,7 +278,7 @@ onMounted(() => {
           <div class="card-body d-flex align-items-center justify-content-center">
              <div v-if="isLoadingChampionPickRate" class="text-center"><div class="spinner-border"></div></div>
              <div v-else-if="championPickRateError" class="alert alert-danger w-100">{{ championPickRateError }}</div>
-            <div v-if="championPickRateData" style="position: relative; height:400px; width:100%;">
+            <div v-if="championPickRateData" class="chart-container" style="position: relative; height:400px; width:100%;">
                  <Bar :data="championPickRateData" :options="{ responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend:{display: false}, title: {display: false}}, scales: {x: {ticks: {callback: function(value) {return value + '%'}} }} }" />
             </div>
              <div v-else-if="!isLoadingChampionPickRate && !championPickRateData" class="alert alert-info w-100">No champion pick rate data.</div>
@@ -213,7 +292,7 @@ onMounted(() => {
           <div class="card-body d-flex align-items-center justify-content-center">
              <div v-if="isLoadingChampionWinRate" class="text-center"><div class="spinner-border"></div></div>
              <div v-else-if="championWinRateError" class="alert alert-danger w-100">{{ championWinRateError }}</div>
-            <div v-if="championWinRateData" style="position: relative; height:400px; width:100%;">
+            <div v-if="championWinRateData" class="chart-container" style="position: relative; height:400px; width:100%;">
                  <Bar :data="championWinRateData" :options="{ responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend:{display: false}, title: {display: false}}, scales: {x: {suggestedMin:30, suggestedMax:70, ticks: {callback: function(value) {return value + '%'}} }} }" />
             </div>
              <div v-else-if="!isLoadingChampionWinRate && !championWinRateData" class="alert alert-info w-100">No champion win rate data (or too few games played).</div>
@@ -228,6 +307,22 @@ onMounted(() => {
 .statistics-view { max-width: 1400px; margin-left: auto; margin-right: auto; }
 .card.h-100 { display: flex; flex-direction: column; }
 .card.h-100 .card-body { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-.card-header h5 { color: #343a40; }
+.card-header {
+  background: linear-gradient(90deg, var(--lol-primary) 80%, rgba(11,198,227,0.08) 100%);
+  color: var(--lol-accent);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.card-header h5 {
+  color: var(--lol-accent);
+  text-shadow: 0 0 6px rgba(11,198,227,0.18);
+}
 .card-body > div[style*="height"] { min-height: 250px; }
+.chart-container {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
 </style>
+``` 

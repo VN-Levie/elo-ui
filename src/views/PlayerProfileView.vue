@@ -237,7 +237,7 @@ watch(() => route.params.playerId, (newId) => { if (newId) fetchPlayerProfile(ne
                     <div class="card shadow-sm">
                         <div class="card-body">
                             <h5 class="card-title text-primary mb-3">Elo Progression (Last {{ sortedMatchHistory.length }} Games)</h5>
-                            <div v-if="eloChartData.datasets[0].data.length > 1">
+                            <div v-if="eloChartData.datasets[0].data.length > 1" class="chart-container">
                                 <EloHistoryChart :chartData="eloChartData" />
                             </div>
                             <div v-else-if="player.gamesPlayed > 0" class="alert alert-light text-center small p-3">
@@ -253,7 +253,7 @@ watch(() => route.params.playerId, (newId) => { if (newId) fetchPlayerProfile(ne
                     <div class="card shadow-sm h-100">
                         <div class="card-body d-flex flex-column justify-content-center align-items-center">
                             <h5 class="card-title text-primary mb-3">Role Win Rate (%)</h5>
-                            <div v-if="rolePerformanceChartData" style="position: relative; height:250px; width:100%;">
+                            <div v-if="rolePerformanceChartData" class="chart-container" style="position: relative; height:250px; width:100%;">
                                 <Radar :data="rolePerformanceChartData" :options="rolePerformanceChartOptions" />
                             </div>
                             <div v-else class="text-muted small mt-3">Not enough data (min 3 games per role, 3 roles played) for Role Performance chart.</div>
@@ -339,24 +339,39 @@ watch(() => route.params.playerId, (newId) => { if (newId) fetchPlayerProfile(ne
 .player-match-history-table td {
     vertical-align: middle;
     font-size: 0.875rem;
+    background: none;
+    color: var(--lol-text-light);
+    border-color: var(--lol-gold-dark);
 }
 
 .table-row-clickable:hover {
     cursor: pointer;
-    background-color: #e9ecef;
-    /* Lighter hover for better readability */
+    background-color: rgba(11,198,227,0.08);
+    /* LoL accent hover */
 }
 
 .sticky-top {
     /* Ensure sticky header in table works within its scrollable parent */
     top: -1px;
-    background-color: var(--bs-table-bg);
-    /* Match table header background */
+    background-color: var(--lol-primary) !important;
+    color: var(--lol-gold-primary) !important;
 }
 
 .champion-icon-fallback {
     /* Basic style for champion icons, can be improved */
-    background-color: #333;
-    /* Fallback color if image fails */
+    background-color: var(--lol-primary);
+    border: 1px solid var(--lol-gold-dark);
+}
+
+.card-header {
+    background: linear-gradient(90deg, var(--lol-primary) 80%, rgba(11,198,227,0.08) 100%);
+    color: var(--lol-accent);
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.card-header h4, .card-header h5 {
+    color: var(--lol-accent);
+    text-shadow: 0 0 6px rgba(11,198,227,0.18);
 }
 </style>

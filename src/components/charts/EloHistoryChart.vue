@@ -1,25 +1,11 @@
 <script setup>
 import { Line } from 'vue-chartjs';
-import { defineProps, computed } from 'vue';
+import { defineProps } from 'vue';
 
 const props = defineProps({
   chartData: {
     type: Object,
     required: true,
-    // Example structure:
-    // {
-    //   labels: ['Match 1', 'Match 2', ...], // Or timestamps
-    //   datasets: [
-    //     {
-    //       label: 'Elo Over Time',
-    //       backgroundColor: '#f87979',
-    //       borderColor: '#f87979', // Can be different from backgroundColor
-    //       data: [1200, 1215, 1205, ...],
-    //       fill: false, // Set to true to fill area under the line
-    //       tension: 0.1 // Makes the line a bit curvy
-    //     }
-    //   ]
-    // }
   },
   chartOptions: {
     type: Object,
@@ -28,22 +14,30 @@ const props = defineProps({
       maintainAspectRatio: false,
       scales: {
         y: {
-          beginAtZero: false, // Elo doesn't have to start at 0 on the chart
+          beginAtZero: false,
           ticks: {
-            // Include a unit in the ticks
-            // callback: function(value, index, values) {
-            //     return value + ' Elo';
-            // }
+            color: "#C8AA6E",
+            font: { family: "'Optimus Princeps', 'Montserrat', Arial, sans-serif" }
           },
+          grid: { color: "rgba(200,170,110,0.18)" },
           title: {
             display: true,
-            text: 'Elo Rating'
+            text: 'Elo Rating',
+            color: "#C8AA6E",
+            font: { family: "'Optimus Princeps', 'Montserrat', Arial, sans-serif", size: 15 }
           }
         },
         x: {
+          ticks: {
+            color: "#C8AA6E",
+            font: { family: "'Optimus Princeps', 'Montserrat', Arial, sans-serif" }
+          },
+          grid: { color: "rgba(200,170,110,0.18)" },
           title: {
             display: true,
-            text: 'Match Sequence / Time'
+            text: 'Match Sequence / Time',
+            color: "#C8AA6E",
+            font: { family: "'Optimus Princeps', 'Montserrat', Arial, sans-serif", size: 15 }
           }
         }
       },
@@ -51,35 +45,37 @@ const props = defineProps({
         legend: {
           display: true,
           position: 'top',
+          labels: {
+            color: "#C8AA6E",
+            font: { family: "'Optimus Princeps', 'Montserrat', Arial, sans-serif", size: 13 }
+          }
         },
         title: {
           display: true,
-          text: 'Player Elo History'
+          text: 'Player Elo History',
+          color: "#0BC6E3",
+          font: { family: "'Optimus Princeps', 'Montserrat', Arial, sans-serif", size: 18, weight: 'bold' }
         },
         tooltip: {
-            callbacks: {
-                label: function(context) {
-                    let label = context.dataset.label || '';
-                    if (label) {
-                        label += ': ';
-                    }
-                    if (context.parsed.y !== null) {
-                        label += context.parsed.y.toFixed(0) + ' Elo';
-                    }
-                    return label;
-                }
+          backgroundColor: "#1E2328",
+          titleColor: "#C8AA6E",
+          bodyColor: "#C8AA6E",
+          borderColor: "#0BC6E3",
+          borderWidth: 1,
+          bodyFont: { family: "'Optimus Princeps', 'Montserrat', Arial, sans-serif" },
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) label += ': ';
+              if (context.parsed.y !== null) label += context.parsed.y.toFixed(0) + ' Elo';
+              return label;
             }
+          }
         }
       }
     })
   }
 });
-
-// chartId is not strictly necessary for vue-chartjs v4+ with <script setup> if you only have one chart type per component file
-// but can be useful if you have multiple chart instances of the same type or for specific testing.
-// const chartId = 'elo-history-line-chart';
-// const datasetIdKey = 'label'; // Default is 'label'
-
 </script>
 
 <template>
@@ -87,17 +83,13 @@ const props = defineProps({
     <Line
       :data="chartData"
       :options="chartOptions"
-      />
-      <!-- :chart-id="chartId"
-      :dataset-id-key="datasetIdKey" -->
+    />
   </div>
 </template>
 
 <style scoped>
 .chart-container {
-  padding: 1rem;
-  background-color: #fff;
-  border-radius: 0.25rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  /* Sử dụng style chung đã có ở main.css */
+  /* Nếu muốn override thêm, có thể thêm ở đây */
 }
 </style>

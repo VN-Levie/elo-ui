@@ -153,10 +153,5 @@ provide('pbrConfigError', readonly(pbrConfigError));
 </template>
 
 <style>
-html, body { height: 100%; }
-#elo-dashboard-app { display: flex; flex-direction: column; min-height: 100vh; }
-.main-content { flex-grow: 1; padding-top: 70px; padding-bottom: 2rem; }
-.navbar-brand { letter-spacing: 0.5px; }
-.nav-link.active { font-weight: bold; }
-.footer { font-size: 0.9em; }
+
 </style>

@@ -1,0 +1,562 @@
+/* === LOL/RIOT THEMED UI STYLES === */
+
+/* --- Google Fonts Import (Place this at the top of your main CSS or in index.html) --- */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Optimus+Princeps&display=swap');
+
+/* --- CSS Variables for Theming --- */
+:root {
+    --lol-font-primary: 'Montserrat', sans-serif;
+    --lol-font-headings: 'Optimus Princeps', serif;
+
+    --lol-primary: #0A323C; /* Deep Hextech Blue */
+    --lol-blue-deep: #0A323C;
+    --lol-blue-medium: #094757;
+    --lol-blue-bright: #0BC6E3;
+    --lol-blue-glow: rgba(11, 198, 227, 0.5);
+
+    --lol-gold-primary: #C8AA6E;
+    --lol-gold-dark: #785A28;
+    --lol-gold-highlight: #F0E6D2;
+
+    --lol-grey-darkest: #010A13;
+    --lol-grey-dark: #111318;
+    --lol-grey-medium: #1E2328;
+    --lol-grey-light: #A092B1;
+    --lol-grey-border: #2c3e50;
+
+    --lol-secondary: #785A28;
+    --lol-accent: #0BC6E3;
+    --lol-text-light: #C8AA6E;
+    --lol-text-dark: #A092B1;
+    --lol-bg-dark: #111318;
+    --lol-bg-panel: #1E2328;
+    --lol-border-gold: #C8AA6E;
+
+    --lol-text-primary: var(--lol-gold-highlight);
+    --lol-text-secondary: var(--lol-gold-primary);
+    --lol-text-muted: var(--lol-grey-light);
+    --lol-text-link: var(--lol-blue-bright);
+
+    --lol-success: #36B474;
+    --lol-danger: #E84057;
+    --lol-warning: #FFC107;
+    --lol-info: var(--lol-blue-bright);
+
+    --lol-border-radius: 0.375rem;
+    --lol-card-padding: 1.25rem;
+
+    --chartjs-legend-color: var(--lol-text-light);
+    --chartjs-axis-color: var(--lol-text-light);
+}
+
+/* --- Base Styles --- */
+html, body { height: 100%; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: var(--lol-font-primary);
+    background-color: var(--lol-bg-dark) !important;
+    color: var(--lol-text-light);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+/* xóa css của thẻ a */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Optional: Add a subtle background texture/image */
+ /*
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-image: url('/path/to/your/hextech-pattern.png');
+    background-repeat: repeat;
+    opacity: 0.03;
+    z-index: -1;
+    pointer-events: none;
+}
+*/
+
+/* --- Typography --- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--lol-font-headings);
+    color: var(--lol-blue-bright);
+    letter-spacing: 0.5px;
+}
+.display-5, .display-6 {
+    color: var(--lol-gold-primary);
+    border-bottom: 1px solid var(--lol-gold-dark);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem !important;
+}
+a {
+    color: var(--lol-blue-bright);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+a:hover {
+    color: var(--lol-gold-highlight);
+    /* text-decoration: underline; */
+}
+hr {
+    border-color: var(--lol-grey-border);
+    opacity: 0.5;
+}
+
+/* --- Navbar --- */
+.navbar.bg-dark {
+    background-color: var(--lol-bg-panel) !important;
+    border-bottom: 2px solid var(--lol-secondary);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.navbar-brand, .nav-link {
+    color: var(--lol-text-light) !important;
+    font-family: var(--lol-font-headings);
+    letter-spacing: 0.5px;
+}
+.navbar-brand {
+    font-size: 1.5rem !important;
+}
+.navbar-brand:hover {
+    color: var(--lol-gold-highlight) !important;
+}
+.nav-link {
+    padding: 0.5rem 1rem !important;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+.nav-link:hover, .nav-link.active {
+    color: var(--lol-accent) !important;
+    text-shadow: 0 0 5px var(--lol-accent);
+    border-bottom-color: var(--lol-accent);
+    font-weight: bold;
+}
+.navbar-toggler {
+    border-color: var(--lol-gold-dark);
+}
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28200, 170, 110, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* --- Main Content Area --- */
+#elo-dashboard-app { display: flex; flex-direction: column; min-height: 100vh; }
+.main-content { flex-grow: 1; padding-top: 80px; padding-bottom: 3rem; }
+
+/* --- Page Headers --- */
+.leaderboard-view > header,
+.statistics-view > header,
+.player-profile-view > .d-flex.justify-content-between,
+.match-detail-view > .d-flex.justify-content-between {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+.leaderboard-view > header .display-5,
+.statistics-view > header .display-5,
+.player-profile-view .display-5,
+.match-detail-view .display-6 {
+    color: var(--lol-accent);
+    border-bottom: 2px solid var(--lol-gold-dark);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.5rem !important;
+    font-family: var(--lol-font-headings);
+}
+.leaderboard-view > header .lead,
+.statistics-view > header .lead,
+.player-profile-view .text-muted,
+.match-detail-view .text-muted {
+    color: var(--lol-text-muted) !important;
+}
+
+/* --- Cards --- */
+.card {
+    background-color: var(--lol-bg-panel);
+    border: 1px solid var(--lol-secondary);
+    color: var(--lol-text-light);
+    border-radius: var(--lol-border-radius);
+    box-shadow: 0 0 18px 0 rgba(11,198,227,0.07), 0 2px 8px rgba(0,0,0,0.25);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border-width: 2px;
+}
+.card-header {
+    background: linear-gradient(90deg, var(--lol-primary) 80%, rgba(11,198,227,0.08) 100%);
+    color: var(--lol-accent);
+    border-bottom: 2.5px solid var(--lol-gold-dark);
+    font-family: var(--lol-font-headings);
+    padding: 0.75rem 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+.card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5 {
+    color: var(--lol-accent);
+    margin-bottom: 0;
+    text-shadow: 0 0 6px rgba(11,198,227,0.18);
+}
+.card-body {
+    padding: var(--lol-card-padding);
+}
+.card-footer {
+    color: var(--lol-text-dark);
+    opacity: 0.8;
+}
+.card:hover {
+    box-shadow: 0 0 24px 0 var(--lol-blue-glow), 0 4px 16px rgba(0,0,0,0.35);
+    border-color: var(--lol-accent);
+}
+
+/* --- Tables --- */
+.table {
+    color: var(--lol-text-light);
+    border-color: var(--lol-grey-border);
+}
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(40, 45, 55, 0.3);
+}
+.table-hover tbody tr:hover td,
+.table-hover tbody tr:hover th {
+    background-color: rgba(11, 198, 227, 0.15) !important;
+    color: var(--lol-accent) !important;
+}
+.table-dark th, thead.table-dark th {
+    background: linear-gradient(90deg, var(--lol-primary) 80%, rgba(200,170,110,0.08) 100%) !important;
+    color: var(--lol-gold-primary) !important;
+    border-bottom: 2px solid var(--lol-gold-dark) !important;
+    font-family: var(--lol-font-headings);
+    font-size: 1.05em;
+    letter-spacing: 0.5px;
+}
+.table-bordered th, .table-bordered td {
+    border-color: var(--lol-secondary) !important;
+}
+.sticky-top {
+    background-color: var(--lol-primary);
+}
+.table td, .table th {
+    border-top-color: var(--lol-grey-border);
+}
+.table .text-muted {
+    color: var(--lol-text-dark, #8c809b) !important;
+    font-size: 0.8em;
+}
+
+/* --- Forms --- */
+.form-label {
+    color: var(--lol-text-secondary);
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+.form-control, .form-select {
+    background-color: rgba(0,0,0,0.2);
+    border: 1px solid var(--lol-secondary);
+    color: var(--lol-text-light);
+    border-radius: 0.25rem;
+}
+.form-control:focus, .form-select:focus {
+    background-color: rgba(0,0,0,0.3);
+    border-color: var(--lol-accent);
+    color: #fff;
+    box-shadow: 0 0 0 0.25rem var(--lol-blue-glow);
+}
+.form-control::placeholder {
+    color: rgba(200, 170, 110, 0.6);
+}
+
+/* --- Buttons --- */
+.btn {
+    font-family: var(--lol-font-headings);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: var(--lol-border-radius);
+    padding: 0.5rem 1.25rem;
+    transition: all 0.2s ease;
+}
+.btn-primary {
+    background-color: var(--lol-accent);
+    border-color: var(--lol-accent);
+    color: var(--lol-bg-dark);
+    font-weight: 500;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #0dade0;
+    border-color: #0dade0;
+    color: var(--lol-bg-dark);
+    box-shadow: 0 0 8px rgba(11, 198, 227, 0.5);
+}
+.btn-secondary, .btn-outline-secondary {
+    color: var(--lol-text-light);
+    border-color: var(--lol-secondary);
+}
+.btn-secondary:hover, .btn-outline-secondary:hover, .btn-outline-secondary:focus {
+    background-color: var(--lol-secondary);
+    color: var(--lol-bg-dark);
+    border-color: var(--lol-secondary);
+}
+.btn-danger {
+    background-color: #7C0A02;
+    border-color: #5B0000;
+    color: #fff;
+}
+.btn-danger:hover, .btn-danger:focus {
+    background-color: #A80000;
+    border-color: #7C0A02;
+}
+.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+.btn-lg { padding: 0.75rem 1.5rem; font-size: 1.1rem; }
+
+/* --- Modals --- */
+.modal-content {
+    background-color: var(--lol-bg-panel);
+    border: 1px solid var(--lol-secondary);
+    color: var(--lol-text-light);
+    border-radius: var(--lol-border-radius);
+}
+.modal-header {
+    border-bottom-color: var(--lol-secondary);
+    background-color: var(--lol-blue-medium);
+}
+.modal-header .modal-title {
+    color: var(--lol-gold-primary);
+    font-family: var(--lol-font-headings);
+}
+.modal-header .btn-close {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(130deg);
+}
+.modal-footer {
+    border-top-color: var(--lol-secondary);
+}
+
+/* --- Alerts --- */
+.alert { border-left-width: 4px; border-radius: var(--lol-border-radius); }
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.2);
+    border-color: rgba(40, 167, 69, 0.5);
+    color: #a3d8b3;
+}
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    border-color: rgba(220, 53, 69, 0.5);
+    color: #f0b8bf;
+}
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.15);
+    border-color: rgba(13, 202, 240, 0.4);
+    color: #9eeaf9;
+}
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left-color: var(--lol-warning);
+    color: #ffeeba;
+}
+
+/* --- Progress Bar & Simulation Status --- */
+.global-simulation-controls-display {
+    background-color: rgba(0,0,0,0.15) !important;
+    border: 1px solid var(--lol-secondary) !important;
+    border-left: 3px solid var(--lol-blue-bright) !important;
+}
+.global-simulation-controls-display h6 {
+    color: var(--lol-accent);
+}
+.progress {
+    background-color: var(--lol-grey-medium);
+    border: 1px solid var(--lol-grey-border);
+}
+.progress-bar.bg-info {
+    background-color: var(--lol-accent) !important;
+    color: var(--lol-bg-dark) !important;
+    font-weight: bold;
+}
+
+/* --- Specific View Styling Tweaks --- */
+.leaderboard-section .table-responsive {
+    max-height: 550px;
+}
+.leaderboard-section .btn-group-sm > .btn.active {
+    background-color: var(--lol-blue-bright);
+    color: var(--lol-grey-darkest);
+    border-color: var(--lol-blue-bright);
+}
+.player-profile-view .stat-item {
+    background-color: rgba(255,255,255,0.03);
+    border: 1px solid var(--lol-grey-border);
+    transition: background-color 0.2s;
+}
+.player-profile-view .stat-item:hover {
+    background-color: rgba(255,255,255,0.07);
+}
+.player-profile-view .stat-item h6 { color: var(--lol-text-light); opacity: 0.8;}
+.player-profile-view .stat-item p { color: var(--lol-accent);}
+.scoreboard-unified thead.table-light th {
+    background-color: var(--lol-blue-medium);
+    color: var(--lol-gold-primary);
+    font-family: var(--lol-font-headings);
+}
+.scoreboard-unified tbody th.stat-label {
+    background-color: var(--lol-grey-medium);
+    color: var(--lol-text-secondary);
+    font-weight: 500;
+}
+.scoreboard-unified .team-a-header { color: var(--lol-blue-bright) !important; }
+.scoreboard-unified .team-b-header { color: var(--lol-danger) !important; }
+
+/* Footer */
+.footer {
+    background-color: var(--lol-bg-panel) !important;
+    color: var(--lol-text-light);
+    border-top: 1px solid var(--lol-secondary);
+    padding: 1rem 0;
+    font-size: 0.9em;
+}
+
+/* Champion Icons */
+.champ-icon {
+    background-color: var(--lol-primary);
+    border: 1px solid var(--lol-secondary);
+    display: inline-block;
+    text-align: center;
+    line-height: 22px;
+    font-size: 10px;
+    color: var(--lol-text-light);
+}
+
+/* Highlight player row in match details */
+.highlight-player td {
+    background-color: rgba(200, 170, 110, 0.15) !important;
+}
+
+/* Scrollbar styling (webkit only) */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: var(--lol-grey-medium);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--lol-gold-dark);
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--lol-gold-primary);
+}
+
+/* Chart.js Canvas container */
+.chart-container, div[style*="height:280px"], div[style*="height:300px"], div[style*="height:350px"], div[style*="height:400px"], div[style*="height:500px"] {
+    padding: 0.5rem;
+    border-radius: var(--lol-border-radius);
+}
+
+/* === LOL THEME ENHANCEMENTS (Tiếp theo) === */
+
+/* Text Muted for Dark Theme */
+.text-muted {
+    color: var(--lol-text-dark, #A092B1) !important;
+    opacity: 0.75;
+}
+
+/* Card Footer text can also use this or a similar muted style */
+.card-footer {
+    color: var(--lol-text-dark, #A092B1);
+    opacity: 0.8;
+}
+
+/* Small text in general, often used with muted */
+small {
+    /* font-size: 0.85em; */
+}
+
+/* Specific uses of text-muted that might need adjustment if the default isn't enough */
+.leaderboard-view .controls-section .mt-3 small.text-muted,
+.player-profile-view .card-header small.text-muted,
+.match-detail-view .card-header small.text-muted {
+    color: var(--lol-text-dark, #9285a0) !important;
+    opacity: 0.9;
+}
+
+/* For KDA ratio in tables, if it uses text-muted directly */
+.table .text-muted {
+    color: var(--lol-text-dark, #8c809b) !important;
+    font-size: 0.8em;
+}
+
+/* Muted text within the global simulation banner */
+.global-simulation-controls-display .text-muted {
+    color: var(--lol-text-dark, #a89cb8) !important;
+}
+
+/* Placeholder for subtle overall texture or pattern */
+ /*
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: url('/path/to/subtle-hextech-pattern.png');
+    opacity: 0.05;
+    z-index: -1;
+}
+*/
+
+/* === LOL CHARTS & CARD ENHANCEMENTS === */
+
+/* Chart container: dark background, gold border, subtle glow */
+.chart-container {
+    background: linear-gradient(135deg, rgba(10,50,60,0.98) 80%, rgba(11,198,227,0.08) 100%);
+    border: 1.5px solid var(--lol-gold-dark);
+    box-shadow: 0 0 18px 0 rgba(11,198,227,0.08), 0 2px 8px rgba(0,0,0,0.25);
+    padding: 1.25rem;
+    border-radius: var(--lol-border-radius);
+    color: var(--lol-text-light);
+    transition: box-shadow 0.2s;
+}
+.chart-container:hover {
+    box-shadow: 0 0 24px 0 var(--lol-blue-glow), 0 4px 16px rgba(0,0,0,0.35);
+}
+
+/* Chart.js axis, legend, and tooltip text color (for dark bg) */
+.chartjs-render-monitor,
+.chartjs-size-monitor {
+    color-scheme: dark;
+}
+.chartjs-tooltip {
+    background: var(--lol-bg-panel);
+    color: var(--lol-text-light);
+    border: 1px solid var(--lol-gold-dark);
+    border-radius: 0.25rem;
+    font-family: var(--lol-font-primary);
+    font-size: 1em;
+}
+
+/* Chart legend and axis text color (for Chart.js v4+) */
+.chartjs-render-monitor .tick,
+.chartjs-render-monitor .legend,
+.chartjs-render-monitor .title {
+    color: var(--lol-text-light) !important;
+}
+.chartjs-render-monitor .grid {
+    stroke: rgba(200,170,110,0.15) !important;
+}
+
+/* Chart bar/line color palette for LoL theme */
+.lol-bar-blue { background-color: #0BC6E3 !important; border-color: #0BC6E3 !important; }
+.lol-bar-gold { background-color: #C8AA6E !important; border-color: #C8AA6E !important; }
+.lol-bar-red { background-color: #E84057 !important; border-color: #E84057 !important; }
+.lol-bar-green { background-color: #36B474 !important; border-color: #36B474 !important; }
+.lol-bar-purple { background-color: #A092B1 !important; border-color: #A092B1 !important; }
+
+/* Chart bar border radius for modern look */
+.chartjs-bar {
+    border-radius: 6px !important;
+}
+
+/* Spinner color for loading in charts/cards */
+.spinner-border {
+    color: var(--lol-accent) !important;
+}
