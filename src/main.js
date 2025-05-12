@@ -3,7 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
-
+import 'bootstrap';
 // Import và đăng ký các thành phần của Chart.js
 import {
     Chart as ChartJS,
